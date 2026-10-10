@@ -173,6 +173,11 @@ async function mailtmCreate(localPart) {
     if (!create.ok) {
       lastErr = `mail.tm /accounts failed (${create.status}): ${(await create.text()).slice(0, 200)}`;
       if (create.status === 422) continue; // address taken — try again
+      if (create.status === 429) {
+        // Rate limit — back off for 3 seconds and retry with fresh entropy
+        await new Promise((r) => setTimeout(r, 3000));
+        continue;
+      }
       throw new Error(lastErr);
     }
 
@@ -750,26 +755,33 @@ export async function createPerplexityAccount(session, opts = {}) {
     log("signed in as:", existing.user.username || existing.user.email);
   }
 
-  // 4. Sign in to the separate API console (it has its own NextAuth session).
-  log("signing in to API console ...");
+  // 4. Sign in to the separate API console (best-effort; core account on www.perplexity.ai is already valid).
+  log("signing in to API console (best-effort) ...");
   let consoleSession = null;
-  if (mailToken) {
-    consoleSession = await consoleLogin(session, email, mailToken, { timeoutMs: otpTimeoutMs });
-  } else {
-    // Reused main-site session: the console may or may not already be signed in.
-    consoleSession = await readConsoleSession(session);
-  }
-  log("console session:", consoleSession?.user?.username || consoleSession?.user?.email || "(none)");
+  let project = { groups: [] };
+  let groups = [];
+  try {
+    if (mailToken) {
+      consoleSession = await consoleLogin(session, email, mailToken, { timeoutMs: Math.min(otpTimeoutMs, 40000) });
+    } else {
+      consoleSession = await readConsoleSession(session);
+    }
+    log("console session:", consoleSession?.user?.username || consoleSession?.user?.email || "(none)");
 
-  // 5. Create the API project/org with the random country + matching zip.
-  log("ensuring API project ...");
-  const project = await ensureProject(session, {
-    projectName, country, zip: country.zip, email,
-  });
-  const groups = project.groups || (project.org ? [project.org] : []);
-  if (project.created) log("project created:", project.org?.api_org_id);
-  if (project.error) log("project creation issue:", JSON.stringify(project.error).slice(0, 200));
-  const userInfo = await readUserInfo(session);
+    // 5. Create the API project/org with the random country + matching zip.
+    if (consoleSession?.user) {
+      log("ensuring API project ...");
+      project = await ensureProject(session, {
+        projectName, country, zip: country.zip, email,
+      });
+      groups = project.groups || (project.org ? [project.org] : []);
+      if (project.created) log("project created:", project.org?.api_org_id);
+      if (project.error) log("project creation issue:", JSON.stringify(project.error).slice(0, 200));
+    }
+  } catch (consoleErr) {
+    log("API console setup skipped (core account is ready):", consoleErr.message);
+  }
+  const userInfo = await readUserInfo(session).catch(() => null);
   log("api orgs:", groups.map((g) => g.display_name).join(", ") || "(none)");
 
   // 6. Gather cookies + tokens from both origins.

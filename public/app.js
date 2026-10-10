@@ -993,17 +993,26 @@ async function startBatchSpawn() {
               appendLog(ev.message);
               fetchAccountsAndStats();
             } else if (ev.type === 'account_error') {
-              appendLog(ev.message);
+              appendLog(`Gagal: ${ev.message}`);
+              if (el.spawnProgressText) {
+                el.spawnProgressText.innerHTML = `<span class="text-red-500 font-medium">${escapeHtml(ev.message)}</span>`;
+              }
             } else if (ev.type === 'complete') {
               appendLog(ev.message);
+              const isSuccess = (ev.created || 0) > 0;
               if (el.spawnProgressBar) {
                 el.spawnProgressBar.style.width = '100%';
+                el.spawnProgressBar.className = isSuccess 
+                  ? 'h-full bg-teal-600 dark:bg-teal-500 transition-all duration-300'
+                  : 'h-full bg-red-500 transition-all duration-300';
               }
               if (el.spawnProgressBadge) {
                 el.spawnProgressBadge.innerText = '100%';
               }
               if (el.spawnProgressText) {
-                el.spawnProgressText.innerHTML = `<span class="text-teal-600 dark:text-teal-400 font-bold">${ev.message}</span>`;
+                el.spawnProgressText.innerHTML = isSuccess
+                  ? `<span class="text-teal-600 dark:text-teal-400 font-bold">${escapeHtml(ev.message)}</span>`
+                  : `<span class="text-red-500 dark:text-red-400 font-bold">${escapeHtml(ev.message)}</span>`;
               }
               showToast(ev.message);
               fetchAccountsAndStats();
@@ -1012,9 +1021,12 @@ async function startBatchSpawn() {
               document.getElementById('closeSpawnDoneBtn')?.classList.remove('hidden');
               if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = false;
 
-              setTimeout(() => {
-                closeSpawnModal();
-              }, 2500);
+              // Only auto-close if at least one account succeeded
+              if (isSuccess) {
+                setTimeout(() => {
+                  closeSpawnModal();
+                }, 2500);
+              }
             } else if (ev.type === 'error') {
               throw new Error(ev.message || 'Terjadi kesalahan spawner.');
             }
