@@ -29,14 +29,13 @@ const el = {
   conversationContainer: document.getElementById('conversationContainer'),
   displayQueryText: document.getElementById('displayQueryText'),
   sourcesGrid: document.getElementById('sourcesGrid'),
-  sourceCount: document.getElementById('sourceCount'),
-  responseMarkdown: document.getElementById('responseMarkdown'),
-  responseStatusLabel: document.getElementById('responseStatusLabel'),
+  sourceCountBadge: document.getElementById('sourceCountBadge'),
+  answerMarkdown: document.getElementById('answerMarkdown'),
   copyAnswerBtn: document.getElementById('copyAnswerBtn'),
   exportApaBtn: document.getElementById('exportApaBtn'),
-  followupBar: document.getElementById('followupBar'),
-  followupInput: document.getElementById('followupInput'),
-  followupSubmitBtn: document.getElementById('followupSubmitBtn'),
+  floatingInputBar: document.getElementById('floatingInputBar'),
+  followUpInput: document.getElementById('followUpInput'),
+  followUpSubmitBtn: document.getElementById('followUpSubmitBtn'),
   sessionHistoryList: document.getElementById('sessionHistoryList'),
   clearHistoryBtn: document.getElementById('clearHistoryBtn'),
   bottomAccountEmail: document.getElementById('bottomAccountEmail'),
@@ -64,10 +63,28 @@ const el = {
   thinkingToggleBtn: document.getElementById('thinkingToggleBtn'),
   thinkingChevron: document.getElementById('thinkingChevron'),
   thinkingDuration: document.getElementById('thinkingDuration'),
-  thinkingContent: document.getElementById('thinkingContent')
+  thinkingContent: document.getElementById('thinkingContent'),
+  // Theme Toggle Elements
+  themeToggleBtn: document.getElementById('themeToggleBtn'),
+  themeIconMoon: document.getElementById('themeIconMoon'),
+  themeIconSun: document.getElementById('themeIconSun'),
+  themeToggleText: document.getElementById('themeToggleText'),
+  // Spawn Account Modal Elements
+  spawnModal: document.getElementById('spawnModal'),
+  closeSpawnModalBtn: document.getElementById('closeSpawnModalBtn'),
+  cancelSpawnBtn: document.getElementById('cancelSpawnBtn'),
+  confirmSpawnBtn: document.getElementById('confirmSpawnBtn'),
+  confirmSpawnBtnText: document.getElementById('confirmSpawnBtnText'),
+  spawnCountInput: document.getElementById('spawnCountInput'),
+  spawnFormSection: document.getElementById('spawnFormSection'),
+  spawnProgressSection: document.getElementById('spawnProgressSection'),
+  spawnProgressText: document.getElementById('spawnProgressText'),
+  spawnProgressBadge: document.getElementById('spawnProgressBadge'),
+  spawnProgressBar: document.getElementById('spawnProgressBar'),
+  spawnStatusLogs: document.getElementById('spawnStatusLogs')
 };
 
-// Initialize
+// Initialize App
 document.addEventListener('DOMContentLoaded', () => {
   if (window.marked) {
     marked.setOptions({
@@ -75,11 +92,36 @@ document.addEventListener('DOMContentLoaded', () => {
       gfm: true
     });
   }
+  initTheme();
   loadSessions();
   setupEventListeners();
   fetchAccountsAndStats();
   setInterval(fetchAccountsAndStats, 5000); // Polling status pool setiap 5 detik
 });
+
+// Theme Management (Light Mode Default, Dark Mode Switchable)
+function initTheme() {
+  const currentTheme = localStorage.getItem('op_theme') || 'light';
+  applyTheme(currentTheme);
+
+  el.themeToggleBtn?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    applyTheme(newTheme);
+  });
+}
+
+function applyTheme(theme) {
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('op_theme', 'dark');
+    if (el.themeToggleText) el.themeToggleText.innerText = 'Mode Terang';
+  } else {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('op_theme', 'light');
+    if (el.themeToggleText) el.themeToggleText.innerText = 'Mode Gelap';
+  }
+}
 
 // Event Listeners
 function setupEventListeners() {
@@ -92,12 +134,9 @@ function setupEventListeners() {
   el.navSearchBtn?.addEventListener('click', () => switchView('studio'));
   el.navAcademicBtn?.addEventListener('click', () => {
     switchView('studio');
-    el.navSearchBtn.classList.remove('bg-zinc-800/50', 'text-white');
-    el.navSearchBtn.classList.add('text-zinc-400');
-    el.navAcademicBtn.classList.add('bg-zinc-800/50', 'text-white');
-    el.navAcademicBtn.classList.remove('text-zinc-400');
-    el.focusSelector.value = 'academic';
-    el.promptInput.focus();
+    setNavActive(el.navAcademicBtn);
+    if (el.focusSelector) el.focusSelector.value = 'academic';
+    el.promptInput?.focus();
   });
   el.navFarmBtn?.addEventListener('click', () => switchView('farm'));
   el.newChatBtn?.addEventListener('click', startNewChat);
@@ -111,8 +150,8 @@ function setupEventListeners() {
     }
   });
 
-  el.followupSubmitBtn?.addEventListener('click', handleFollowupSubmit);
-  el.followupInput?.addEventListener('keydown', (e) => {
+  el.followUpSubmitBtn?.addEventListener('click', handleFollowupSubmit);
+  el.followUpInput?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleFollowupSubmit();
@@ -122,19 +161,44 @@ function setupEventListeners() {
   // Suggestion Chips
   document.querySelectorAll('.suggestion-chip').forEach(btn => {
     btn.addEventListener('click', () => {
-      el.promptInput.value = btn.innerText.replace(/^[^\w]+/, '').trim();
-      handleMainSubmit();
+      if (el.promptInput) {
+        el.promptInput.value = btn.innerText.replace(/^[^\w]+/, '').trim();
+        handleMainSubmit();
+      }
     });
   });
 
   // Action Buttons
   el.copyAnswerBtn?.addEventListener('click', copyAnswer);
   el.exportApaBtn?.addEventListener('click', openApaModal);
-  el.closeApaModalBtn?.addEventListener('click', () => el.apaModal.classList.add('hidden'));
+  el.closeApaModalBtn?.addEventListener('click', () => {
+    el.apaModal?.classList.add('hidden');
+    el.apaModal?.classList.remove('flex');
+  });
   el.copyApaModalBtn?.addEventListener('click', copyApaCitations);
   el.quickRotateBtn?.addEventListener('click', rotateAccount);
   el.farmRotateBtn?.addEventListener('click', rotateAccount);
-  el.farmSpawnBtn?.addEventListener('click', spawnAccount);
+
+  // Spawn Account Modal Triggers
+  el.farmSpawnBtn?.addEventListener('click', openSpawnModal);
+  el.closeSpawnModalBtn?.addEventListener('click', closeSpawnModal);
+  el.cancelSpawnBtn?.addEventListener('click', closeSpawnModal);
+  el.confirmSpawnBtn?.addEventListener('click', startBatchSpawn);
+
+  // Preset Buttons for Spawn Quantity
+  document.querySelectorAll('.spawn-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const count = btn.getAttribute('data-count');
+      if (el.spawnCountInput) {
+        el.spawnCountInput.value = count;
+      }
+      document.querySelectorAll('.spawn-preset-btn').forEach(b => {
+        b.classList.remove('border-teal-500', 'bg-teal-50', 'text-teal-800', 'dark:bg-teal-500/10', 'dark:text-teal-400');
+      });
+      btn.classList.add('border-teal-500', 'bg-teal-50', 'text-teal-800', 'dark:bg-teal-500/10', 'dark:text-teal-400');
+    });
+  });
+
   el.clearHistoryBtn?.addEventListener('click', clearAllSessions);
   el.thinkingToggleBtn?.addEventListener('click', () => {
     if (!el.thinkingContent) return;
@@ -168,31 +232,38 @@ function setupEventListeners() {
   });
 }
 
+function setNavActive(activeBtn) {
+  const buttons = [
+    { element: el.navSearchBtn, defaultText: 'Pencarian' },
+    { element: el.navAcademicBtn, defaultText: 'Fokus Akademik' },
+    { element: el.navFarmBtn, defaultText: 'Kelola Akun' }
+  ];
+
+  buttons.forEach(({ element }) => {
+    if (!element) return;
+    if (element === activeBtn) {
+      element.className = "w-full flex items-center justify-between px-3 py-2 rounded-lg bg-teal-50 text-teal-800 border border-teal-200/80 dark:bg-zinc-800/50 dark:text-white dark:border-transparent transition text-sm font-medium";
+    } else {
+      element.className = "w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800/30 border border-transparent transition text-sm font-medium";
+    }
+  });
+}
+
 function toggleMobileSidebar() {
-  el.sidebar.classList.toggle('-translate-x-full');
-  el.mobileBackdrop.classList.toggle('hidden');
+  el.sidebar?.classList.toggle('-translate-x-full');
+  el.mobileBackdrop?.classList.toggle('hidden');
 }
 
 function switchView(viewName) {
   state.activeView = viewName;
   if (viewName === 'studio') {
-    el.viewStudio.classList.remove('hidden');
-    el.viewFarm.classList.add('hidden');
-    el.navSearchBtn.classList.add('bg-zinc-800/50', 'text-white');
-    el.navSearchBtn.classList.remove('text-zinc-400');
-    el.navFarmBtn.classList.remove('bg-zinc-800/50', 'text-white');
-    el.navFarmBtn.classList.add('text-zinc-400');
-    el.navAcademicBtn.classList.remove('bg-zinc-800/50', 'text-white');
-    el.navAcademicBtn.classList.add('text-zinc-400');
+    el.viewStudio?.classList.remove('hidden');
+    el.viewFarm?.classList.add('hidden');
+    setNavActive(el.navSearchBtn);
   } else {
-    el.viewStudio.classList.add('hidden');
-    el.viewFarm.classList.remove('hidden');
-    el.navFarmBtn.classList.add('bg-zinc-800/50', 'text-white');
-    el.navFarmBtn.classList.remove('text-zinc-400');
-    el.navSearchBtn.classList.remove('bg-zinc-800/50', 'text-white');
-    el.navSearchBtn.classList.add('text-zinc-400');
-    el.navAcademicBtn.classList.remove('bg-zinc-800/50', 'text-white');
-    el.navAcademicBtn.classList.add('text-zinc-400');
+    el.viewStudio?.classList.add('hidden');
+    el.viewFarm?.classList.remove('hidden');
+    setNavActive(el.navFarmBtn);
     fetchAccountsAndStats();
   }
 }
@@ -200,314 +271,231 @@ function switchView(viewName) {
 function startNewChat() {
   switchView('studio');
   state.currentSession = null;
-  el.heroContainer.classList.remove('hidden');
-  el.conversationContainer.classList.add('hidden');
-  el.followupBar.classList.add('hidden');
+  el.heroContainer?.classList.remove('hidden');
+  el.conversationContainer?.classList.add('hidden');
+  el.floatingInputBar?.classList.add('hidden');
   if (el.searchProgressSection) el.searchProgressSection.classList.add('hidden');
-  el.promptInput.value = '';
-  el.promptInput.focus();
+  if (el.promptInput) {
+    el.promptInput.value = '';
+    el.promptInput.focus();
+  }
 }
 
-let progressInterval = null;
-let progressStartTime = 0;
-let progressTimers = [];
-
-function startProgress(query) {
-  if (el.searchProgressSection) el.searchProgressSection.classList.remove('hidden');
-  if (el.thinkingBox) el.thinkingBox.classList.remove('hidden');
-  if (el.thinkingContent) {
-    el.thinkingContent.innerHTML = '';
-    el.thinkingContent.classList.add('hidden');
-  }
-  if (el.thinkingChevron) el.thinkingChevron.style.transform = 'rotate(0deg)';
-  if (el.thinkingDuration) el.thinkingDuration.innerText = '';
-  
-  if (el.progressSpinner) {
-    el.progressSpinner.className = 'w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin shrink-0';
-  }
-  if (el.searchProgressStep) {
-    el.searchProgressStep.innerText = 'Menghubungkan ke sesi Chrome Perplexity...';
-  }
-
-  progressStartTime = Date.now();
-  if (progressInterval) clearInterval(progressInterval);
-  progressInterval = setInterval(() => {
-    const elapsed = ((Date.now() - progressStartTime) / 1000).toFixed(1);
-    if (el.searchProgressTimer) el.searchProgressTimer.innerText = `${elapsed}s`;
-  }, 100);
-
-  progressTimers.forEach(clearTimeout);
-  progressTimers = [];
-
-  addThinkingStep(`Menganalisis kueri pencarian: "${query}"`);
-
-  progressTimers.push(setTimeout(() => {
-    if (state.isGenerating) {
-      if (el.searchProgressStep) el.searchProgressStep.innerText = 'Menjelajah basis data web dan mengekstrak rujukan relevan...';
-      addThinkingStep('Menemukan URL sumber terpercaya & memvalidasi metadata halaman...');
-    }
-  }, 1200));
-
-  progressTimers.push(setTimeout(() => {
-    if (state.isGenerating) {
-      if (el.searchProgressStep) el.searchProgressStep.innerText = 'Menganalisis dokumen & menyusun sintesis jawaban...';
-      addThinkingStep('Mengevaluasi kutipan rujukan dan memformat struktur sintesis...');
-    }
-  }, 3200));
-}
-
-function addThinkingStep(text) {
-  if (!el.thinkingContent) return;
-  const p = document.createElement('div');
-  p.className = 'flex items-center gap-2 py-0.5';
-  p.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></span><span>${escapeHtml(text)}</span>`;
-  el.thinkingContent.appendChild(p);
-}
-
-function completeProgress(sourcesCount) {
-  if (progressInterval) clearInterval(progressInterval);
-  progressTimers.forEach(clearTimeout);
-  progressTimers = [];
-
-  const totalTime = ((Date.now() - progressStartTime) / 1000).toFixed(1);
-  if (el.searchProgressTimer) el.searchProgressTimer.innerText = `${totalTime}s`;
-  if (el.thinkingDuration) el.thinkingDuration.innerText = `${totalTime} detik`;
-
-  if (el.progressSpinner) {
-    el.progressSpinner.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
-  }
-  if (el.searchProgressStep) {
-    el.searchProgressStep.innerText = `Selesai: ${sourcesCount} sumber terverifikasi (${totalTime}s)`;
-  }
-  addThinkingStep(`Sintesis selesai disusun berdasarkan ${sourcesCount} sumber.`);
-}
-
-function failProgress(errorMsg) {
-  if (progressInterval) clearInterval(progressInterval);
-  progressTimers.forEach(clearTimeout);
-  progressTimers = [];
-
-  if (el.progressSpinner) {
-    el.progressSpinner.className = 'w-2 h-2 rounded-full bg-red-400 shrink-0';
-  }
-  if (el.searchProgressStep) {
-    el.searchProgressStep.innerText = `Proses gagal: ${errorMsg}`;
-  }
-  addThinkingStep(`Error: ${errorMsg}`);
-}
-
-function renderSourcesSkeleton() {
-  if (!el.sourcesGrid) return;
-  el.sourceCount.innerText = '...';
-  el.sourcesGrid.innerHTML = `
-    <div class="p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 animate-pulse">
-      <div class="w-4 h-4 rounded bg-zinc-700/60 shrink-0 mt-0.5"></div>
-      <div class="w-full space-y-1.5 truncate">
-        <div class="h-3 bg-zinc-700/60 rounded w-3/4"></div>
-        <div class="h-2.5 bg-zinc-800/80 rounded w-1/3"></div>
-      </div>
-    </div>
-    <div class="p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 animate-pulse hidden sm:flex">
-      <div class="w-4 h-4 rounded bg-zinc-700/60 shrink-0 mt-0.5"></div>
-      <div class="w-full space-y-1.5 truncate">
-        <div class="h-3 bg-zinc-700/60 rounded w-4/5"></div>
-        <div class="h-2.5 bg-zinc-800/80 rounded w-1/2"></div>
-      </div>
-    </div>
-    <div class="p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 animate-pulse hidden lg:flex">
-      <div class="w-4 h-4 rounded bg-zinc-700/60 shrink-0 mt-0.5"></div>
-      <div class="w-full space-y-1.5 truncate">
-        <div class="h-3 bg-zinc-700/60 rounded w-2/3"></div>
-        <div class="h-2.5 bg-zinc-800/80 rounded w-2/5"></div>
-      </div>
-    </div>
-  `;
-}
-
-function renderResponseSkeleton() {
-  if (!el.responseMarkdown) return;
-  el.responseMarkdown.innerHTML = `
-    <div class="space-y-3.5 py-2 animate-pulse">
-      <div class="h-4 bg-zinc-800/80 rounded w-11/12"></div>
-      <div class="h-4 bg-zinc-800/60 rounded w-full"></div>
-      <div class="h-4 bg-zinc-800/50 rounded w-4/5"></div>
-      <div class="h-4 bg-zinc-800/40 rounded w-3/5"></div>
-    </div>
-  `;
-}
-
-function setButtonsLoading(isLoading) {
-  if (el.submitBtn) {
-    el.submitBtn.disabled = isLoading;
-    el.submitBtn.innerHTML = isLoading
-      ? '<span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>'
-      : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
-  }
-  if (el.followupSubmitBtn) {
-    el.followupSubmitBtn.disabled = isLoading;
-    el.followupSubmitBtn.innerHTML = isLoading
-      ? '<span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>'
-      : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
-  }
-  if (el.promptInput) el.promptInput.disabled = isLoading;
-  if (el.followupInput) el.followupInput.disabled = isLoading;
-  if (el.focusSelector) el.focusSelector.disabled = isLoading;
-  if (el.modelSelector) el.modelSelector.disabled = isLoading;
-}
-
+// Search & Generation Flow
 async function handleMainSubmit() {
-  const query = el.promptInput.value.trim();
+  const query = el.promptInput?.value.trim();
   if (!query || state.isGenerating) return;
 
-  state.isGenerating = true;
-  setButtonsLoading(true);
-
-  // Transition UI to Conversation view
-  el.heroContainer.classList.add('hidden');
-  el.conversationContainer.classList.remove('hidden');
-  el.conversationContainer.classList.add('flex');
-  el.displayQueryText.innerText = query;
-  el.responseStatusLabel.innerText = 'Mencari & menyusun sintesis...';
-
-  // Start visual skeletons and thinking tracker
-  startProgress(query);
-  renderSourcesSkeleton();
-  renderResponseSkeleton();
+  const focus = el.focusSelector?.value || 'web';
+  const model = el.modelSelector?.value || 'perplexity/sonar-web';
 
   const session = {
     id: 'sess_' + Date.now(),
-    title: query.slice(0, 50),
     query,
-    focus: el.focusSelector.value,
-    model: el.modelSelector.value,
+    focus,
+    model,
+    createdAt: new Date().toISOString(),
     answer: '',
     sources: [],
-    timestamp: Date.now()
+    thinking: []
   };
+
   state.currentSession = session;
+  state.sessions.unshift(session);
+  saveSessions();
+  renderSessionHistory();
+
+  // Switch UI to Conversation view
+  el.heroContainer?.classList.add('hidden');
+  el.conversationContainer?.classList.remove('hidden');
+  el.conversationContainer?.classList.add('flex');
+  el.floatingInputBar?.classList.remove('hidden');
+  if (el.displayQueryText) el.displayQueryText.innerText = query;
+  if (el.promptInput) el.promptInput.value = '';
+
+  await executeSearch(session);
+}
+
+async function handleFollowupSubmit() {
+  const query = el.followUpInput?.value.trim();
+  if (!query || state.isGenerating || !state.currentSession) return;
+
+  const focus = el.focusSelector?.value || 'web';
+  const model = el.modelSelector?.value || 'perplexity/sonar-web';
+
+  const followUpSession = {
+    id: 'sess_' + Date.now(),
+    query,
+    focus,
+    model,
+    createdAt: new Date().toISOString(),
+    answer: '',
+    sources: [],
+    thinking: []
+  };
+
+  state.currentSession = followUpSession;
+  state.sessions.unshift(followUpSession);
+  saveSessions();
+  renderSessionHistory();
+
+  if (el.displayQueryText) el.displayQueryText.innerText = query;
+  if (el.followUpInput) el.followUpInput.value = '';
+
+  await executeSearch(followUpSession);
+}
+
+// Clean Smart Formatter
+function sanitizeAndFormatMarkdown(rawText, sources = []) {
+  if (!rawText) return '';
+
+  let cleaned = rawText
+    .replace(/^[\s\S]*?(Jawaban:|Berikut adalah|Hasil riset:|Sintesis:)/i, '')
+    .trim();
+
+  if (!cleaned) cleaned = rawText.trim();
+
+  // Elevate section headers
+  cleaned = cleaned.replace(/^([A-Z0-9\s-]{3,35}):\s*$/gm, '### $1');
+
+  // Interactive citation pills
+  cleaned = cleaned.replace(/\[(\d+)\]/g, (match, p1) => {
+    const idx = parseInt(p1, 10);
+    const src = sources[idx - 1];
+    const url = src ? src.url : '#';
+    const domain = src ? (src.domain || 'sumber') : `sumber ${idx}`;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="citation-pill" title="${domain} [${idx}]"><span>[${idx}]</span></a>`;
+  });
+
+  return cleaned;
+}
+
+async function executeSearch(session) {
+  state.isGenerating = true;
+  if (el.submitBtn) el.submitBtn.disabled = true;
+  if (el.followUpSubmitBtn) el.followUpSubmitBtn.disabled = true;
+
+  // Reset Answer & Progress States
+  if (el.answerMarkdown) el.answerMarkdown.innerHTML = '<span class="text-slate-400 dark:text-zinc-500 italic">Menunggu respons dari server...</span>';
+  if (el.sourcesGrid) el.sourcesGrid.innerHTML = '';
+  if (el.sourceCountBadge) el.sourceCountBadge.innerText = '0';
+  if (el.thinkingBox) el.thinkingBox.classList.add('hidden');
+  if (el.thinkingContent) el.thinkingContent.innerHTML = '';
+
+  // Show Progress tracker
+  el.searchProgressSection?.classList.remove('hidden');
+  const timerStart = Date.now();
+  const timerInterval = setInterval(() => {
+    const elapsed = ((Date.now() - timerStart) / 1000).toFixed(1);
+    if (el.searchProgressTimer) el.searchProgressTimer.innerText = `${elapsed}s`;
+  }, 100);
+
+  updateProgressStep('Menghubungkan ke armada Chrome CDP...');
 
   try {
-    const res = await fetch('/v1/chat/completions', {
+    const response = await fetch('/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer open-perplexity'
+      },
       body: JSON.stringify({
         model: session.model,
+        messages: [{ role: 'user', content: session.query }],
         focus: session.focus,
-        messages: [{ role: 'user', content: query }],
         stream: false
       })
     });
 
-    const data = await res.json();
-    if (data.choices && data.choices[0]) {
-      const answerText = data.choices[0].message.content;
-      const sources = data.sources || [];
-
-      session.answer = answerText;
-      session.sources = sources;
-
-      renderAnswer(answerText, sources);
-      renderSources(sources);
-      saveSession(session);
-      completeProgress(sources.length);
-
-      el.responseStatusLabel.innerText = 'Selesai';
-      el.followupBar.classList.remove('hidden');
-    } else if (data.error) {
-      el.responseMarkdown.innerHTML = `<div class="p-3 rounded-lg bg-red-900/30 border border-red-700/50 text-red-300 text-sm">${data.error.message}</div>`;
-      el.responseStatusLabel.innerText = 'Gagal';
-      failProgress(data.error.message);
+    if (!response.ok) {
+      const errJson = await response.json().catch(() => ({}));
+      throw new Error(errJson.error?.message || `HTTP ${response.status}: Terjadi kesalahan kueri.`);
     }
+
+    const data = await response.json();
+    clearInterval(timerInterval);
+
+    const message = data.choices?.[0]?.message || {};
+    const rawAnswer = message.content || 'Tidak ada konten teks yang dihasilkan.';
+    const sources = message.sources || [];
+    const thinking = message.thinking || null;
+
+    session.answer = rawAnswer;
+    session.sources = sources;
+    session.thinking = thinking;
+    saveSessions();
+
+    updateProgressStep('Sintesis jawaban selesai.');
+    if (el.progressSpinner) {
+      el.progressSpinner.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0';
+    }
+
+    // Render Sources
+    renderSources(sources);
+
+    // Render Thinking accordion if available
+    if (thinking && thinking.length > 0) {
+      el.thinkingBox?.classList.remove('hidden');
+      if (el.thinkingDuration) {
+        el.thinkingDuration.innerText = `${((Date.now() - timerStart) / 1000).toFixed(1)}s penalaran`;
+      }
+      if (el.thinkingContent) {
+        el.thinkingContent.innerHTML = Array.isArray(thinking)
+          ? thinking.map(t => `<div class="py-0.5">• ${escapeHtml(t)}</div>`).join('')
+          : `<div class="whitespace-pre-wrap">${escapeHtml(thinking)}</div>`;
+      }
+    }
+
+    // Format & Render Answer Markdown
+    const formattedMarkdown = sanitizeAndFormatMarkdown(rawAnswer, sources);
+    if (el.answerMarkdown) {
+      el.answerMarkdown.innerHTML = marked.parse(formattedMarkdown);
+
+      if (window.renderMathInElement) {
+        renderMathInElement(el.answerMarkdown, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false }
+          ],
+          throwOnError: false
+        });
+      }
+    }
+
   } catch (err) {
-    el.responseMarkdown.innerHTML = `<div class="p-3 rounded-lg bg-red-900/30 border border-red-700/50 text-red-300 text-sm">Gagal menghubungkan ke gateway API: ${err.message}</div>`;
-    el.responseStatusLabel.innerText = 'Error';
-    failProgress(err.message);
+    clearInterval(timerInterval);
+    updateProgressStep(`Gagal: ${err.message}`);
+    if (el.progressSpinner) {
+      el.progressSpinner.className = 'w-3.5 h-3.5 rounded-full bg-red-500 shrink-0';
+    }
+    if (el.answerMarkdown) {
+      el.answerMarkdown.innerHTML = `
+        <div class="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-300 space-y-2">
+          <p class="font-semibold text-sm">Kesalahan Saat Menjalankan Kueri</p>
+          <p class="text-xs font-mono">${escapeHtml(err.message)}</p>
+          <p class="text-xs text-slate-500 dark:text-red-400">Pastikan Chrome instance aktif pada port 9222 dan akun memiliki kuota kueri.</p>
+        </div>
+      `;
+    }
   } finally {
     state.isGenerating = false;
-    setButtonsLoading(false);
+    if (el.submitBtn) el.submitBtn.disabled = false;
+    if (el.followUpSubmitBtn) el.followUpSubmitBtn.disabled = false;
     fetchAccountsAndStats();
   }
 }
 
-async function handleFollowupSubmit() {
-  const query = el.followupInput.value.trim();
-  if (!query || state.isGenerating) return;
-
-  el.promptInput.value = query;
-  el.followupInput.value = '';
-  handleMainSubmit();
-}
-
-function formatMarkdownForDisplay(text, sources = []) {
-  if (!text) return '';
-  let formatted = text;
-
-  // 1. Format and link citations to actual source URLs
-  // Handle [domain.com] or domain.com +1
-  formatted = formatted.replace(/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s\)\.\,]*)?)\s*(?:\+(\d+))?/g, (match, domain, extra) => {
-    // Avoid re-matching if already inside a markdown link
-    const matchedSource = sources.find(s => s.domain?.toLowerCase() === domain.toLowerCase() || s.url?.includes(domain));
-    const url = matchedSource ? matchedSource.url : `https://${domain}`;
-    return ` [${domain}](${url}) `;
-  });
-
-  // 2. Format standalone section headers
-  formatted = formatted.replace(/(^|\n\n)([A-Z][A-Za-z0-9\s\/\-]{2,45})(?:\:)?(\n\n|$)/g, (match, before, header, after) => {
-    const trimmed = header.trim();
-    if (trimmed.startsWith('#') || trimmed.startsWith('*') || trimmed.endsWith('.')) {
-      return match;
-    }
-    return `${before}### ${trimmed}${after}`;
-  });
-
-  // 3. Format key-value properties
-  formatted = formatted.replace(/(^|\n)\s*(Fokus|Kebaruan|Alasan|Alasannya|Metodologi|Tujuan|Kelebihan|Kekurangan|Variabel|Kesimpulan)\s*:\s*/gim, '$1- **$2:** ');
-
-  // 4. Format quoted keyword items
-  formatted = formatted.replace(/(^|\n)\s*("[^"\n]+"|'[^'\n]+')\s*(?=\n|$)/g, '$1- `$2`');
-
-  return formatted;
-}
-
-function renderAnswer(markdownText, sources = []) {
-  if (!markdownText) return;
-  const formattedText = formatMarkdownForDisplay(markdownText, sources);
-
-  if (window.marked) {
-    el.responseMarkdown.innerHTML = marked.parse(formattedText);
-  } else {
-    el.responseMarkdown.innerText = formattedText;
-  }
-
-  // Convert source links to high-contrast interactive citation pills
-  const links = el.responseMarkdown.querySelectorAll('a');
-  links.forEach(a => {
-    const text = a.innerText.trim();
-    if (text.includes('.') || text.startsWith('[') || text.match(/^\d+$/)) {
-      a.className = 'citation-pill';
-      a.target = '_blank';
-      a.title = 'Buka rujukan: ' + a.href;
-    }
-  });
-
-  // Render KaTeX Math if present
-  if (window.renderMathInElement) {
-    window.renderMathInElement(el.responseMarkdown, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '$', right: '$', display: false }
-      ],
-      throwOnError: false
-    });
-  }
+function updateProgressStep(text) {
+  if (el.searchProgressStep) el.searchProgressStep.innerText = text;
 }
 
 function renderSources(sources) {
+  if (!el.sourcesGrid) return;
   el.sourcesGrid.innerHTML = '';
-  el.sourceCount.innerText = sources.length;
+  if (el.sourceCountBadge) el.sourceCountBadge.innerText = sources.length;
 
   if (sources.length === 0) {
-    el.sourcesGrid.innerHTML = '<div class="col-span-full text-xs text-zinc-500 italic">Tidak ada kartu rujukan eksternal.</div>';
+    el.sourcesGrid.innerHTML = '<div class="col-span-full text-xs text-slate-400 dark:text-zinc-500 italic">Tidak ada kartu rujukan eksternal.</div>';
     return;
   }
 
@@ -515,16 +503,16 @@ function renderSources(sources) {
     const card = document.createElement('a');
     card.href = src.url;
     card.target = '_blank';
-    card.className = 'source-card p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 no-underline text-zinc-300';
+    card.className = 'source-card p-2.5 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border flex items-start gap-2.5 no-underline text-slate-700 dark:text-zinc-300 shadow-sm';
 
     const domain = src.domain || 'web';
     const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
 
     card.innerHTML = `
-      <img src="${faviconUrl}" alt="${domain}" class="w-4 h-4 rounded shrink-0 mt-0.5" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22><circle cx=%225%22 cy=%225%22 r=%225%22 fill=%22%23555%22/></svg>'">
+      <img src="${faviconUrl}" alt="${domain}" class="w-4 h-4 rounded shrink-0 mt-0.5" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 10 10%22><circle cx=%225%22 cy=%225%22 r=%225%22 fill=%22%2394a3b8%22/></svg>'">
       <div class="truncate">
-        <p class="text-xs font-medium text-zinc-200 truncate">${escapeHtml(src.title || domain)}</p>
-        <p class="text-[10px] text-zinc-400 font-mono truncate">${domain}</p>
+        <p class="text-xs font-medium text-slate-900 dark:text-zinc-200 truncate">${escapeHtml(src.title || domain)}</p>
+        <p class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono truncate">${domain}</p>
       </div>
     `;
     el.sourcesGrid.appendChild(card);
@@ -544,17 +532,17 @@ async function fetchAccountsAndStats() {
 
     if (json.stats) {
       state.poolStats = json.stats;
-      el.farmStatTotal.innerText = json.stats.totalAccounts;
-      el.farmStatActive.innerText = json.stats.activeAccounts;
-      el.farmStatCooldown.innerText = json.stats.cooldownAccounts;
-      el.farmStatUsage.innerText = json.stats.totalUsage;
-      el.activePoolBadge.innerText = `${json.stats.activeAccounts} Aktif`;
+      if (el.farmStatTotal) el.farmStatTotal.innerText = json.stats.totalAccounts;
+      if (el.farmStatActive) el.farmStatActive.innerText = json.stats.activeAccounts;
+      if (el.farmStatCooldown) el.farmStatCooldown.innerText = json.stats.cooldownAccounts;
+      if (el.farmStatUsage) el.farmStatUsage.innerText = json.stats.totalUsage;
+      if (el.activePoolBadge) el.activePoolBadge.innerText = `${json.stats.activeAccounts} Aktif`;
 
       if (json.stats.strategy && el.farmStrategySelect) {
         el.farmStrategySelect.value = json.stats.strategy;
       }
 
-      if (json.stats.currentAccount) {
+      if (json.stats.currentAccount && el.bottomAccountEmail) {
         el.bottomAccountEmail.innerText = json.stats.currentAccount;
       }
     }
@@ -568,30 +556,32 @@ function renderAccountTable(accounts) {
   el.farmAccountTableBody.innerHTML = '';
 
   if (accounts.length === 0) {
-    el.farmAccountTableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-zinc-500 italic">Belum ada akun di pool. Klik "Buat Akun Otomatis" untuk memulai.</td></tr>';
+    el.farmAccountTableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 dark:text-zinc-500 italic">Belum ada akun di pool. Klik "Buat Akun Otomatis" untuk memulai.</td></tr>';
     return;
   }
 
   accounts.forEach((acc, i) => {
     const row = document.createElement('tr');
-    row.className = acc.isActive ? 'bg-teal-500/5 font-medium' : '';
+    row.className = acc.isActive
+      ? 'bg-teal-50/60 dark:bg-teal-500/5 font-medium'
+      : 'hover:bg-slate-50 dark:hover:bg-zinc-800/20';
 
     const isCooldown = acc.status === 'cooling_down';
     const statusBadge = isCooldown
-      ? `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-mono"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Cooldown (${acc.cooldownRemainingSec}s)</span>`
-      : `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>Aktif</span>`;
+      ? `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[10px] font-mono"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Cooldown (${acc.cooldownRemainingSec}s)</span>`
+      : `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-mono"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Aktif</span>`;
 
-    const activeStar = acc.isActive ? '<span class="text-teal-400 ml-1.5 text-[11px] font-medium">[Aktif]</span>' : '';
+    const activeStar = acc.isActive ? '<span class="text-teal-600 dark:text-teal-400 ml-1.5 text-[11px] font-medium">[Aktif]</span>' : '';
 
     row.innerHTML = `
-      <td class="p-3 text-center text-zinc-500 font-mono">${i + 1}</td>
-      <td class="p-3 font-mono text-zinc-200">${escapeHtml(acc.email)} ${activeStar}</td>
+      <td class="p-3 text-center text-slate-400 dark:text-zinc-500 font-mono">${i + 1}</td>
+      <td class="p-3 font-mono text-slate-800 dark:text-zinc-200">${escapeHtml(acc.email)} ${activeStar}</td>
       <td class="p-3">${statusBadge}</td>
-      <td class="p-3 font-mono">${acc.usageCount}</td>
-      <td class="p-3 text-zinc-400">${acc.lastUsed}</td>
+      <td class="p-3 font-mono text-slate-700 dark:text-zinc-300">${acc.usageCount}</td>
+      <td class="p-3 text-slate-500 dark:text-zinc-400">${acc.lastUsed}</td>
       <td class="p-3 text-right space-x-1.5">
-        ${isCooldown ? `<button onclick="resetAccountCooldown('${acc.id}')" class="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-teal-400 border border-zinc-700 text-[10px]">Reset</button>` : ''}
-        <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 rounded bg-zinc-800 hover:bg-red-900/50 text-red-400 border border-zinc-700 text-[10px]">Hapus</button>
+        ${isCooldown ? `<button onclick="resetAccountCooldown('${acc.id}')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-teal-700 dark:text-teal-400 border border-slate-200 dark:border-zinc-700 text-[10px]">Reset</button>` : ''}
+        <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 rounded bg-slate-100 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-slate-200 dark:border-zinc-700 text-[10px]">Hapus</button>
       </td>
     `;
     el.farmAccountTableBody.appendChild(row);
@@ -604,7 +594,7 @@ async function rotateAccount() {
     el.quickRotateBtn?.classList.add('animate-spin');
     if (el.farmRotateBtn) {
       el.farmRotateBtn.disabled = true;
-      el.farmRotateBtn.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Merotasi...</span>';
+      el.farmRotateBtn.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Merotasi...</span>';
     }
     const res = await fetch('/v1/accounts/rotate', { method: 'POST' });
     const data = await res.json();
@@ -617,30 +607,128 @@ async function rotateAccount() {
       el.quickRotateBtn?.classList.remove('animate-spin');
       if (el.farmRotateBtn) {
         el.farmRotateBtn.disabled = false;
-        el.farmRotateBtn.innerHTML = '<svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg><span>Rotasi Akun</span>';
+        el.farmRotateBtn.innerHTML = '<svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg><span>Rotasi Akun</span>';
       }
     }, 600);
   }
 }
 
-async function spawnAccount() {
+// Modal Spawner Functions
+function openSpawnModal() {
+  if (!el.spawnModal) return;
+  el.spawnModal.classList.remove('hidden');
+  el.spawnModal.classList.add('flex');
+  
+  // Reset Form
+  el.spawnFormSection?.classList.remove('hidden');
+  el.spawnProgressSection?.classList.add('hidden');
+  if (el.confirmSpawnBtn) {
+    el.confirmSpawnBtn.disabled = false;
+    el.confirmSpawnBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span>Mulai Pembuatan</span>';
+  }
+  if (el.cancelSpawnBtn) el.cancelSpawnBtn.disabled = false;
+  if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = false;
+  if (el.spawnCountInput) el.spawnCountInput.value = 1;
+  if (el.spawnProgressBar) {
+    el.spawnProgressBar.style.width = '0%';
+    el.spawnProgressBar.className = 'h-full bg-teal-600 dark:bg-teal-500 transition-all duration-300';
+  }
+  if (el.spawnStatusLogs) el.spawnStatusLogs.innerHTML = '';
+
+  // Reset preset button highlights
+  document.querySelectorAll('.spawn-preset-btn').forEach(b => {
+    b.classList.remove('border-teal-500', 'bg-teal-50', 'text-teal-800', 'dark:bg-teal-500/10', 'dark:text-teal-400');
+    if (b.getAttribute('data-count') === '1') {
+      b.classList.add('border-teal-500', 'bg-teal-50', 'text-teal-800', 'dark:bg-teal-500/10', 'dark:text-teal-400');
+    }
+  });
+}
+
+function closeSpawnModal() {
+  if (!el.spawnModal) return;
+  el.spawnModal.classList.add('hidden');
+  el.spawnModal.classList.remove('flex');
+}
+
+async function startBatchSpawn() {
+  const count = parseInt(el.spawnCountInput?.value, 10) || 1;
+  const clampedCount = Math.min(Math.max(count, 1), 10);
+
+  // Switch UI to in-progress
+  el.spawnFormSection?.classList.add('hidden');
+  el.spawnProgressSection?.classList.remove('hidden');
+  if (el.confirmSpawnBtn) el.confirmSpawnBtn.disabled = true;
+  if (el.cancelSpawnBtn) el.cancelSpawnBtn.disabled = true;
+  if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = true;
+
+  if (el.spawnProgressText) {
+    el.spawnProgressText.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Membuat ${clampedCount} akun baru via mail.tm & CDP...</span>`;
+  }
+  if (el.spawnProgressBar) el.spawnProgressBar.style.width = '20%';
+  if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = '20%';
+
+  const appendLog = (msg) => {
+    if (!el.spawnStatusLogs) return;
+    const item = document.createElement('div');
+    item.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    el.spawnStatusLogs.appendChild(item);
+    el.spawnStatusLogs.scrollTop = el.spawnStatusLogs.scrollHeight;
+  };
+
+  appendLog(`Memulai pembuatan ${clampedCount} akun...`);
+  appendLog(`Memverifikasi status koneksi CDP browser...`);
+
+  // Progress simulation ticker while server works
+  let currentProgress = 25;
+  const progressInterval = setInterval(() => {
+    if (currentProgress < 85) {
+      currentProgress += Math.floor(Math.random() * 5) + 3;
+      if (el.spawnProgressBar) el.spawnProgressBar.style.width = `${currentProgress}%`;
+      if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = `${currentProgress}%`;
+    }
+  }, 3000);
+
   try {
-    showToast('Membuat akun baru...');
-    if (el.farmSpawnBtn) {
-      el.farmSpawnBtn.disabled = true;
-      el.farmSpawnBtn.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span><span>Membuat Akun...</span>';
-    }
-    const res = await fetch('/v1/accounts/spawn', { method: 'POST' });
+    const res = await fetch('/v1/accounts/spawn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ count: clampedCount })
+    });
+    clearInterval(progressInterval);
     const data = await res.json();
-    fetchAccountsAndStats();
-    showToast(data.message || 'Akun baru berhasil dibuat.');
-  } catch (err) {
-    showToast('Gagal membuat akun: ' + err.message);
-  } finally {
-    if (el.farmSpawnBtn) {
-      el.farmSpawnBtn.disabled = false;
-      el.farmSpawnBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span>Buat Akun Otomatis</span>';
+
+    if (res.ok && data.status === 'ok') {
+      if (el.spawnProgressBar) el.spawnProgressBar.style.width = '100%';
+      if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = '100%';
+      if (el.spawnProgressText) {
+        el.spawnProgressText.innerHTML = `<span class="text-teal-600 dark:text-teal-400 font-semibold">Pembuatan akun selesai!</span>`;
+      }
+      appendLog(data.message || `Berhasil membuat ${data.count} akun.`);
+      if (data.accounts) {
+        data.accounts.forEach(acc => appendLog(`Akun terdaftar: ${acc}`));
+      }
+      showToast(data.message || 'Akun baru berhasil ditambahkan ke armada.');
+      fetchAccountsAndStats();
+
+      setTimeout(() => {
+        closeSpawnModal();
+      }, 1500);
+    } else {
+      throw new Error(data.message || 'Server mengembalikan kesalahan pembuatan.');
     }
+  } catch (err) {
+    clearInterval(progressInterval);
+    if (el.spawnProgressBar) {
+      el.spawnProgressBar.style.width = '100%';
+      el.spawnProgressBar.className = 'h-full bg-red-500 transition-all duration-300';
+    }
+    if (el.spawnProgressText) {
+      el.spawnProgressText.innerHTML = `<span class="text-red-500 font-medium">Gagal membuat akun</span>`;
+    }
+    appendLog(`Error: ${err.message}`);
+    showToast(`Gagal: ${err.message}`);
+    if (el.cancelSpawnBtn) el.cancelSpawnBtn.disabled = false;
+    if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = false;
   }
 }
 
@@ -679,7 +767,6 @@ function openApaModal() {
   if (sources.length === 0) {
     el.apaOutputTextarea.value = 'Tidak ada sumber rujukan yang terdeteksi pada jawaban ini.';
   } else {
-    // Generate APA 6th entries
     const entries = sources.map(s => {
       const domain = s.domain || 'situs-web.com';
       const author = s.author || capitalize(domain.split('.')[0]);
@@ -691,98 +778,113 @@ function openApaModal() {
     el.apaOutputTextarea.value = entries.join('\n\n');
   }
 
-  el.apaModal.classList.remove('hidden');
-  el.apaModal.classList.add('flex');
+  el.apaModal?.classList.remove('hidden');
+  el.apaModal?.classList.add('flex');
 }
 
 function copyApaCitations() {
+  if (!el.apaOutputTextarea) return;
   el.apaOutputTextarea.select();
   navigator.clipboard.writeText(el.apaOutputTextarea.value);
-  showToast('Sitasi APA 6th disalin ke clipboard.');
+  showToast('Daftar rujukan APA 6th berhasil disalin ke clipboard.');
 }
 
 function copyAnswer() {
-  if (!state.currentSession || !state.currentSession.answer) return;
+  if (!state.currentSession?.answer) return;
   navigator.clipboard.writeText(state.currentSession.answer);
-  showToast('Jawaban disalin ke clipboard.');
+  showToast('Jawaban markdown berhasil disalin.');
 }
 
 // Session Persistence
-function saveSession(session) {
-  state.sessions.unshift(session);
-  if (state.sessions.length > 20) state.sessions.pop();
-  localStorage.setItem('op_sessions', JSON.stringify(state.sessions));
-  renderSessionList();
+function saveSessions() {
+  try {
+    localStorage.setItem('op_sessions', JSON.stringify(state.sessions.slice(0, 30)));
+  } catch {}
 }
 
 function loadSessions() {
   try {
-    const raw = localStorage.getItem('op_sessions');
-    if (raw) {
-      state.sessions = JSON.parse(raw);
-      renderSessionList();
+    const saved = localStorage.getItem('op_sessions');
+    if (saved) {
+      state.sessions = JSON.parse(saved);
+      renderSessionHistory();
     }
   } catch {}
 }
 
-function renderSessionList() {
+function renderSessionHistory() {
   if (!el.sessionHistoryList) return;
   el.sessionHistoryList.innerHTML = '';
 
   if (state.sessions.length === 0) {
-    el.sessionHistoryList.innerHTML = '<div class="px-2 py-3 text-center text-zinc-500 italic">Belum ada sesi pencarian</div>';
+    el.sessionHistoryList.innerHTML = '<div class="px-2 py-3 text-center text-slate-400 dark:text-zinc-500 italic">Belum ada sesi pencarian</div>';
     return;
   }
 
   state.sessions.forEach(sess => {
     const item = document.createElement('button');
-    item.className = 'w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-zinc-800/60 truncate transition flex items-center gap-2';
-    item.innerHTML = `
-      <span class="w-1.5 h-1.5 rounded-full bg-zinc-600 shrink-0"></span>
-      <span class="truncate text-zinc-300">${escapeHtml(sess.title)}</span>
-    `;
-    item.addEventListener('click', () => {
-      switchView('studio');
-      state.currentSession = sess;
-      el.heroContainer.classList.add('hidden');
-      el.conversationContainer.classList.remove('hidden');
-      el.conversationContainer.classList.add('flex');
-      el.displayQueryText.innerText = sess.query;
-      renderAnswer(sess.answer, sess.sources || []);
-      renderSources(sess.sources || []);
-      el.responseStatusLabel.innerText = 'Selesai';
-      el.followupBar.classList.remove('hidden');
-    });
+    item.className = 'w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800/40 truncate block transition text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200';
+    item.innerText = sess.query;
+    item.title = sess.query;
+    item.addEventListener('click', () => loadHistoricalSession(sess));
     el.sessionHistoryList.appendChild(item);
   });
+}
+
+function loadHistoricalSession(sess) {
+  state.currentSession = sess;
+  switchView('studio');
+  el.heroContainer?.classList.add('hidden');
+  el.conversationContainer?.classList.remove('hidden');
+  el.conversationContainer?.classList.add('flex');
+  el.floatingInputBar?.classList.remove('hidden');
+  if (el.displayQueryText) el.displayQueryText.innerText = sess.query;
+
+  renderSources(sess.sources || []);
+  if (el.answerMarkdown) {
+    const formatted = sanitizeAndFormatMarkdown(sess.answer || '', sess.sources || []);
+    el.answerMarkdown.innerHTML = marked.parse(formatted);
+  }
 }
 
 function clearAllSessions() {
   if (!confirm('Hapus seluruh riwayat sesi pencarian?')) return;
   state.sessions = [];
   localStorage.removeItem('op_sessions');
-  renderSessionList();
+  renderSessionHistory();
   startNewChat();
 }
 
-// Utilities
-function showToast(msg) {
-  const toast = document.createElement('div');
-  toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-teal-500 text-black font-semibold text-xs shadow-2xl transition-all duration-300';
-  toast.innerText = msg;
-  document.body.appendChild(toast);
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    setTimeout(() => toast.remove(), 300);
-  }, 2500);
-}
-
-function escapeHtml(text) {
-  if (!text) return '';
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+// Utility Helpers
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function capitalize(str) {
   if (!str) return '';
   return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function showToast(message) {
+  let toast = document.getElementById('globalToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'globalToast';
+    toast.className = 'fixed bottom-5 right-5 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white dark:bg-white dark:text-black font-medium text-xs shadow-2xl transition-opacity duration-300 opacity-0 pointer-events-none';
+    document.body.appendChild(toast);
+  }
+
+  toast.innerText = message;
+  toast.classList.remove('opacity-0');
+  toast.classList.add('opacity-100');
+
+  setTimeout(() => {
+    toast.classList.remove('opacity-100');
+    toast.classList.add('opacity-0');
+  }, 3000);
 }

@@ -1,3 +1,9 @@
+/* ==========================================================================
+   Open Perplexity Farm & Web Studio - Theme & Component Styles
+   Default: Clean Light Mode | With Solid Dark Mode Support (.dark)
+   Antislop Design System: High Contrast, Solid Typography, Zero Emojis
+   ========================================================================== */
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -7,40 +13,63 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2d2d;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2a2d2d;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #3f4444;
 }
 
-/* Prose Typography Customization for Dark Mode */
+/* ==========================================================================
+   Prose Typography Customization
+   ========================================================================== */
 .prose {
-  color: #d1d5db;
+  color: #334155;
   font-size: 0.9375rem;
   line-height: 1.75;
 }
 
+.dark .prose {
+  color: #d1d5db;
+}
+
 .prose h1, .prose h2, .prose h3, .prose h4 {
-  color: #ffffff;
+  color: #0f172a;
   font-weight: 600;
   letter-spacing: -0.015em;
 }
 
+.dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4 {
+  color: #ffffff;
+}
+
 .prose h1 {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
   padding-bottom: 0.35rem;
-  border-bottom: 1px solid #2a2d2d;
+  border-bottom: 1px solid #e2e8f0;
+}
+.dark .prose h1 {
+  border-bottom-color: #2a2d2d;
 }
 
 .prose h2 {
-  font-size: 1.2rem;
+  font-size: 1.18rem;
   margin-top: 1.5rem;
   margin-bottom: 0.6rem;
   padding-bottom: 0.3rem;
-  border-bottom: 1px solid #252828;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
+}
+.dark .prose h2 {
+  border-bottom-color: #252828;
   color: #f3f4f6;
 }
 
@@ -48,6 +77,9 @@
   font-size: 1.05rem;
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+.dark .prose h3 {
   color: #e5e7eb;
 }
 
@@ -55,6 +87,9 @@
   font-size: 0.95rem;
   margin-top: 1rem;
   margin-bottom: 0.4rem;
+  color: #334155;
+}
+.dark .prose h4 {
   color: #d1d5db;
 }
 
@@ -65,14 +100,20 @@
 }
 
 .prose strong, .prose b {
-  color: #f9fafb;
+  color: #0f172a;
   font-weight: 600;
+}
+.dark .prose strong, .dark .prose b {
+  color: #f9fafb;
 }
 
 .prose a {
-  color: #14b8a6;
+  color: #0d9488;
   text-decoration: none;
   font-weight: 500;
+}
+.dark .prose a {
+  color: #14b8a6;
 }
 .prose a:hover {
   text-decoration: underline;
@@ -83,12 +124,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  background-color: rgba(20, 184, 166, 0.12);
-  color: #2dd4bf !important;
-  border: 1px solid rgba(20, 184, 166, 0.3);
+  background-color: rgba(13, 148, 136, 0.1);
+  color: #0f766e !important;
+  border: 1px solid rgba(13, 148, 136, 0.28);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: 0.72rem;
+  font-weight: 600;
   line-height: 1.2;
   padding: 0.15rem 0.45rem;
   border-radius: 0.375rem;
@@ -99,38 +140,61 @@
   white-space: nowrap;
 }
 .citation-pill:hover {
+  background-color: rgba(13, 148, 136, 0.2);
+  border-color: rgba(13, 148, 136, 0.5);
+  color: #0d9488 !important;
+  transform: translateY(-1px);
+}
+.dark .citation-pill {
+  background-color: rgba(20, 184, 166, 0.12);
+  color: #2dd4bf !important;
+  border: 1px solid rgba(20, 184, 166, 0.3);
+}
+.dark .citation-pill:hover {
   background-color: rgba(20, 184, 166, 0.25);
   border-color: rgba(20, 184, 166, 0.5);
   color: #5eead4 !important;
-  transform: translateY(-1px);
 }
 
 /* Code & Pre */
 .prose code {
-  color: #2dd4bf;
-  background-color: #202222;
+  color: #0f766e;
+  background-color: #f1f5f9;
   padding: 0.2em 0.45em;
   border-radius: 0.375rem;
   font-size: 0.85em;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  border: 1px solid #e2e8f0;
+}
+.dark .prose code {
+  color: #2dd4bf;
+  background-color: #202222;
   border: 1px solid #2e3232;
 }
 
 .prose pre {
-  background-color: #161717;
-  border: 1px solid #2e3232;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   padding: 1rem;
   overflow-x: auto;
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
+.dark .prose pre {
+  background-color: #161717;
+  border: 1px solid #2e3232;
+}
+
 .prose pre code {
-  color: #e5e7eb;
+  color: #1e293b;
   background-color: transparent;
   padding: 0;
   border: none;
   font-size: 0.875rem;
+}
+.dark .prose pre code {
+  color: #e5e7eb;
 }
 
 /* Lists Styling */
@@ -157,6 +221,9 @@
   width: 0.35rem;
   height: 0.35rem;
   border-radius: 9999px;
+  background-color: #0d9488;
+}
+.dark .prose ul > li::before {
   background-color: #14b8a6;
 }
 
@@ -175,13 +242,18 @@
 }
 
 .prose blockquote {
-  border-left: 3px solid #14b8a6;
-  background-color: rgba(20, 184, 166, 0.04);
+  border-left: 3px solid #0d9488;
+  background-color: rgba(13, 148, 136, 0.05);
   padding: 0.5rem 1rem;
   border-radius: 0 0.5rem 0.5rem 0;
-  color: #9ca3af;
+  color: #64748b;
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+.dark .prose blockquote {
+  border-left-color: #14b8a6;
+  background-color: rgba(20, 184, 166, 0.04);
+  color: #9ca3af;
 }
 
 .prose table {
@@ -192,11 +264,19 @@
   font-size: 0.875rem;
 }
 .prose th, .prose td {
-  border: 1px solid #2e3232;
+  border: 1px solid #e2e8f0;
   padding: 0.5rem 0.75rem;
   text-align: left;
 }
+.dark .prose th, .dark .prose td {
+  border-color: #2e3232;
+}
+
 .prose th {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.dark .prose th {
   background-color: #202222;
   color: #ffffff;
 }
@@ -212,10 +292,16 @@
 
 /* Source Card Hover Effects */
 .source-card {
-  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 .source-card:hover {
   transform: translateY(-2px);
   border-color: #0d9488;
+  background-color: #f8fafc;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+.dark .source-card:hover {
+  border-color: #14b8a6;
   background-color: #252828;
+  box-shadow: none;
 }

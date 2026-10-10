@@ -48,6 +48,60 @@ export class CdpSession {
     });
   }
 
+  on(event, cb) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
+    }
+    this.eventListeners.get(event).push(cb);
+  }
+
+  off(event, cb) {
+    const list = this.eventListeners.get(event) || [];
+    this.eventListeners.set(event, list.filter(fn => fn !== cb));
+  }
+
+  waitFor(event, { timeoutMs = 35000 } = {}) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error(`Timeout menunggu event CDP: ${event}`));
+      }, timeoutMs);
+      const cb = (params) => {
+        cleanup();
+        resolve(params);
+      };
+      const cleanup = () => {
+        clearTimeout(timer);
+        this.off(event, cb);
+      };
+      this.on(event, cb);
+    });
+  }
+
+  async ensureConnected() {
+    if (!this.ws || this.ws.readyState !== 1) {
+      await this.connect();
+    }
+  }
+
+  getCreatorSessionWrapper() {
+    const self = this;
+    function createDomainProxy(domain) {
+      return new Proxy({}, {
+        get: (_, action) => (params = {}) => self.send(`${domain}.${action}`, params)
+      });
+    }
+
+    return new Proxy({
+      waitFor: (event, opts) => self.waitFor(event, opts)
+    }, {
+      get: (target, prop) => {
+        if (prop in target) return target[prop];
+        return createDomainProxy(prop);
+      }
+    });
+  }
+
   async evaluate(expression) {
     const res = await this.send("Runtime.evaluate", {
       expression,

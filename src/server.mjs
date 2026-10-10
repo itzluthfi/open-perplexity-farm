@@ -154,20 +154,58 @@ export async function createServer(options = {}) {
     }
 
     if (pathname === "/v1/accounts/spawn" && req.method === "POST") {
-      try {
-        console.log("[Manual Trigger] Memulai proses pembuatan akun baru...");
-        const newAcc = await spawnNewAccount(cdp);
-        pool.syncAccounts();
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({
-          status: "ok",
-          message: `Akun baru ${newAcc?.account?.email || "baru"} berhasil dibuat dan masuk pool!`,
-          account: newAcc?.account?.email
-        }));
-      } catch (err) {
-        res.writeHead(500, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: err.message }));
-      }
+      let bodyStr = "";
+      req.on("data", chunk => bodyStr += chunk);
+      req.on("end", async () => {
+        try {
+          const body = JSON.parse(bodyStr || "{}");
+          const count = Math.min(Math.max(parseInt(body.count, 10) || 1, 1), 10);
+          console.log(`[Manual Trigger] Memulai permintaan pembuatan ${count} akun baru...`);
+
+          const createdAccounts = [];
+          const failures = [];
+
+          for (let i = 0; i < count; i++) {
+            console.log(`[Batch-Spawner] Memproses akun (${i + 1}/${count})...`);
+            try {
+              const newAcc = await spawnNewAccount(cdp);
+              pool.syncAccounts();
+              const accEmail = newAcc.email || newAcc.account?.email || `Akun #${i + 1}`;
+              createdAccounts.push(accEmail);
+            } catch (accErr) {
+              console.error(`[Batch-Spawner] Gagal membuat akun #${i + 1}:`, accErr.message);
+              failures.push({ index: i + 1, error: accErr.message });
+            }
+          }
+
+          pool.syncAccounts();
+
+          if (createdAccounts.length === 0) {
+            res.writeHead(500, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({
+              status: "error",
+              message: `Gagal membuat akun: ${failures[0]?.error || "Terjadi kesalahan pada spawner"}`,
+              failures
+            }));
+            return;
+          }
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({
+            status: "ok",
+            message: count === 1
+              ? `Akun baru ${createdAccounts[0]} berhasil dibuat dan masuk pool!`
+              : `Berhasil membuat ${createdAccounts.length} dari ${count} akun baru ke pool!`,
+            count: createdAccounts.length,
+            requested: count,
+            accounts: createdAccounts,
+            failures: failures.length > 0 ? failures : undefined
+          }));
+        } catch (err) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: "error", message: err.message }));
+        }
+      });
       return;
     }
 
