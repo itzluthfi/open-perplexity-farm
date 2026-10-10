@@ -1,7 +1,7 @@
 import { ACCOUNTS_DIR } from "./config.mjs";
 import { createPerplexityAccount } from "./creator/perplexity_creator.mjs";
 
-export async function spawnNewAccount(cdpSession) {
+export async function spawnNewAccount(cdpSession, options = {}) {
   console.log("\n=======================================================");
   console.log("[Auto-Spawner] Memulai pembuatan akun Perplexity baru...");
   console.log("=======================================================\n");
@@ -12,7 +12,8 @@ export async function spawnNewAccount(cdpSession) {
   const result = await createPerplexityAccount(sessionWrapper, {
     outDir: ACCOUNTS_DIR,
     forceFresh: true,
-    otpTimeoutMs: 120000
+    otpTimeoutMs: 120000,
+    onLog: options.onLog
   });
 
   const email = result.email || result.account?.email;

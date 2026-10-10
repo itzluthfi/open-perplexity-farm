@@ -662,10 +662,14 @@ async function startBatchSpawn() {
   if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = true;
 
   if (el.spawnProgressText) {
-    el.spawnProgressText.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Membuat ${clampedCount} akun baru via mail.tm & CDP...</span>`;
+    el.spawnProgressText.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Memulai pembuatan ${clampedCount} akun baru...</span>`;
   }
-  if (el.spawnProgressBar) el.spawnProgressBar.style.width = '20%';
-  if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = '20%';
+  if (el.spawnProgressBar) {
+    el.spawnProgressBar.style.width = '3%';
+    el.spawnProgressBar.className = 'h-full bg-teal-600 dark:bg-teal-500 transition-all duration-300';
+  }
+  if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = '0%';
+  if (el.spawnStatusLogs) el.spawnStatusLogs.innerHTML = '';
 
   const appendLog = (msg) => {
     if (!el.spawnStatusLogs) return;
@@ -675,58 +679,98 @@ async function startBatchSpawn() {
     el.spawnStatusLogs.scrollTop = el.spawnStatusLogs.scrollHeight;
   };
 
-  appendLog(`Memulai pembuatan ${clampedCount} akun...`);
-  appendLog(`Memverifikasi status koneksi CDP browser...`);
-
-  // Progress simulation ticker while server works
-  let currentProgress = 25;
-  const progressInterval = setInterval(() => {
-    if (currentProgress < 85) {
-      currentProgress += Math.floor(Math.random() * 5) + 3;
-      if (el.spawnProgressBar) el.spawnProgressBar.style.width = `${currentProgress}%`;
-      if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = `${currentProgress}%`;
-    }
-  }, 3000);
-
   try {
     const res = await fetch('/v1/accounts/spawn', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ count: clampedCount })
     });
-    clearInterval(progressInterval);
-    const data = await res.json();
 
-    if (res.ok && data.status === 'ok') {
-      if (el.spawnProgressBar) el.spawnProgressBar.style.width = '100%';
-      if (el.spawnProgressBadge) el.spawnProgressBadge.innerText = '100%';
-      if (el.spawnProgressText) {
-        el.spawnProgressText.innerHTML = `<span class="text-teal-600 dark:text-teal-400 font-semibold">Pembuatan akun selesai!</span>`;
-      }
-      appendLog(data.message || `Berhasil membuat ${data.count} akun.`);
-      if (data.accounts) {
-        data.accounts.forEach(acc => appendLog(`Akun terdaftar: ${acc}`));
-      }
-      showToast(data.message || 'Akun baru berhasil ditambahkan ke armada.');
-      fetchAccountsAndStats();
+    if (!res.ok && res.status >= 500) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Server error saat inisialisasi pembuatan akun.');
+    }
 
-      setTimeout(() => {
-        closeSpawnModal();
-      }, 1500);
-    } else {
-      throw new Error(data.message || 'Server mengembalikan kesalahan pembuatan.');
+    if (!res.body) {
+      throw new Error('ReadableStream tidak didukung browser ini.');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data: ')) {
+          const jsonStr = trimmed.slice(6).trim();
+          if (!jsonStr) continue;
+          try {
+            const ev = JSON.parse(jsonStr);
+
+            if (ev.progress !== undefined && el.spawnProgressBar && el.spawnProgressBadge) {
+              el.spawnProgressBar.style.width = `${ev.progress}%`;
+              el.spawnProgressBadge.innerText = `${ev.progress}%`;
+            }
+
+            if (ev.type === 'start') {
+              appendLog(ev.message);
+            } else if (ev.type === 'account_start') {
+              if (el.spawnProgressText) {
+                el.spawnProgressText.innerHTML = `<span class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Memproses Akun ${ev.index} dari ${ev.total}...</span>`;
+              }
+              appendLog(ev.message);
+            } else if (ev.type === 'log') {
+              appendLog(ev.message);
+            } else if (ev.type === 'account_success') {
+              appendLog(ev.message);
+              fetchAccountsAndStats();
+            } else if (ev.type === 'account_error') {
+              appendLog(ev.message);
+            } else if (ev.type === 'complete') {
+              appendLog(ev.message);
+              if (el.spawnProgressBar) {
+                el.spawnProgressBar.style.width = '100%';
+              }
+              if (el.spawnProgressBadge) {
+                el.spawnProgressBadge.innerText = '100%';
+              }
+              if (el.spawnProgressText) {
+                el.spawnProgressText.innerHTML = `<span class="text-teal-600 dark:text-teal-400 font-semibold">${ev.message}</span>`;
+              }
+              showToast(ev.message);
+              fetchAccountsAndStats();
+
+              setTimeout(() => {
+                closeSpawnModal();
+              }, 2500);
+            } else if (ev.type === 'error') {
+              throw new Error(ev.message || 'Terjadi kesalahan spawner.');
+            }
+          } catch (jsonErr) {
+            console.warn('Gagal parse SSE frame:', jsonErr);
+          }
+        }
+      }
     }
   } catch (err) {
-    clearInterval(progressInterval);
     if (el.spawnProgressBar) {
       el.spawnProgressBar.style.width = '100%';
       el.spawnProgressBar.className = 'h-full bg-red-500 transition-all duration-300';
     }
     if (el.spawnProgressText) {
-      el.spawnProgressText.innerHTML = `<span class="text-red-500 font-medium">Gagal membuat akun</span>`;
+      el.spawnProgressText.innerHTML = `<span class="text-red-500 font-medium">Gagal: ${err.message}</span>`;
     }
     appendLog(`Error: ${err.message}`);
-    showToast(`Gagal: ${err.message}`);
+    showToast(`Gagal membuat akun: ${err.message}`);
+  } finally {
     if (el.cancelSpawnBtn) el.cancelSpawnBtn.disabled = false;
     if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = false;
   }

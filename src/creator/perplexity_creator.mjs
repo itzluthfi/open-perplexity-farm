@@ -684,7 +684,14 @@ export async function createPerplexityAccount(session, opts = {}) {
   const forceFresh = !!opts.forceFresh;
   const otpTimeoutMs = opts.otpTimeoutMs || 180000;
 
-  const log = (...a) => console.log("[pplx]", ...a);
+  const log = (...a) => {
+    console.log("[pplx]", ...a);
+    if (typeof opts.onLog === "function") {
+      try {
+        opts.onLog(a.map(x => typeof x === "object" ? JSON.stringify(x) : String(x)).join(" "));
+      } catch {}
+    }
+  };
 
   // 0. Make sure we're on the Perplexity origin.
   await ensureOrigin(session, APP);

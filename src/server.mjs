@@ -160,50 +160,110 @@ export async function createServer(options = {}) {
         try {
           const body = JSON.parse(bodyStr || "{}");
           const count = Math.min(Math.max(parseInt(body.count, 10) || 1, 1), 10);
-          console.log(`[Manual Trigger] Memulai permintaan pembuatan ${count} akun baru...`);
+          console.log(`[Manual Trigger] Memulai permintaan pembuatan ${count} akun baru (SSE Stream)...`);
+
+          res.writeHead(200, {
+            "Content-Type": "text/event-stream; charset=utf-8",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive"
+          });
+
+          const sendEvent = (eventData) => {
+            try {
+              res.write(`data: ${JSON.stringify(eventData)}\n\n`);
+            } catch {}
+          };
+
+          sendEvent({
+            type: "start",
+            total: count,
+            progress: 2,
+            message: `Memulai pembuatan ${count} akun baru...`
+          });
 
           const createdAccounts = [];
           const failures = [];
 
           for (let i = 0; i < count; i++) {
-            console.log(`[Batch-Spawner] Memproses akun (${i + 1}/${count})...`);
+            const accNum = i + 1;
+            const startPct = Math.round((i / count) * 95);
+            sendEvent({
+              type: "account_start",
+              index: accNum,
+              total: count,
+              progress: Math.max(startPct, 5),
+              message: `[Akun ${accNum}/${count}] Menyiapkan browser CDP...`
+            });
+
             try {
-              const newAcc = await spawnNewAccount(cdp);
+              const newAcc = await spawnNewAccount(cdp, {
+                onLog: (rawLog) => {
+                  let userMsg = rawLog;
+                  if (rawLog.includes("creating mail.tm inbox")) userMsg = "Membuat inbox sementara di mail.tm...";
+                  else if (rawLog.includes("inbox:")) userMsg = `Inbox siap: ${rawLog.replace("inbox:", "").trim()}`;
+                  else if (rawLog.includes("requesting sign-in email")) userMsg = "Meminta tautan verifikasi login Perplexity...";
+                  else if (rawLog.includes("waiting for email")) userMsg = "Menunggu email verifikasi masuk...";
+                  else if (rawLog.includes("email received")) userMsg = "Email verifikasi diterima! Memproses autentikasi...";
+                  else if (rawLog.includes("signed in as")) userMsg = `Berhasil login: ${rawLog.replace("signed in as:", "").trim()}`;
+                  else if (rawLog.includes("signing in to API console")) userMsg = "Menghubungkan ke API console...";
+                  else if (rawLog.includes("ensuring API project")) userMsg = "Mengonfigurasi API project & tokens...";
+
+                  sendEvent({
+                    type: "log",
+                    index: accNum,
+                    total: count,
+                    progress: Math.min(Math.round(startPct + ((1 / count) * 80) * 0.5), 95),
+                    message: `[Akun ${accNum}/${count}] ${userMsg}`
+                  });
+                }
+              });
+
               pool.syncAccounts();
-              const accEmail = newAcc.email || newAcc.account?.email || `Akun #${i + 1}`;
+              const accEmail = newAcc.email || newAcc.account?.email || `Akun #${accNum}`;
               createdAccounts.push(accEmail);
+
+              const finishPct = Math.round(((i + 1) / count) * 95);
+              sendEvent({
+                type: "account_success",
+                index: accNum,
+                total: count,
+                progress: finishPct,
+                email: accEmail,
+                message: `[Akun ${accNum}/${count}] Berhasil! Email: ${accEmail}`
+              });
             } catch (accErr) {
-              console.error(`[Batch-Spawner] Gagal membuat akun #${i + 1}:`, accErr.message);
-              failures.push({ index: i + 1, error: accErr.message });
+              console.error(`[Batch-Spawner] Gagal membuat akun #${accNum}:`, accErr.message);
+              failures.push({ index: accNum, error: accErr.message });
+              sendEvent({
+                type: "account_error",
+                index: accNum,
+                total: count,
+                error: accErr.message,
+                message: `[Akun ${accNum}/${count}] Gagal: ${accErr.message}`
+              });
             }
           }
 
           pool.syncAccounts();
 
-          if (createdAccounts.length === 0) {
-            res.writeHead(500, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({
-              status: "error",
-              message: `Gagal membuat akun: ${failures[0]?.error || "Terjadi kesalahan pada spawner"}`,
-              failures
-            }));
-            return;
-          }
-
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({
-            status: "ok",
-            message: count === 1
-              ? `Akun baru ${createdAccounts[0]} berhasil dibuat dan masuk pool!`
-              : `Berhasil membuat ${createdAccounts.length} dari ${count} akun baru ke pool!`,
-            count: createdAccounts.length,
-            requested: count,
+          sendEvent({
+            type: "complete",
+            total: count,
+            created: createdAccounts.length,
+            progress: 100,
             accounts: createdAccounts,
-            failures: failures.length > 0 ? failures : undefined
-          }));
+            failures: failures.length > 0 ? failures : undefined,
+            message: createdAccounts.length > 0
+              ? `Selesai! Berhasil menambahkan ${createdAccounts.length} dari ${count} akun ke armada.`
+              : `Pembuatan gagal: tidak ada akun yang berhasil dibuat.`
+          });
+
+          res.end();
         } catch (err) {
-          res.writeHead(500, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ status: "error", message: err.message }));
+          try {
+            res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
+            res.end();
+          } catch {}
         }
       });
       return;
