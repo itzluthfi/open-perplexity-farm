@@ -817,6 +817,13 @@ function openSpawnModal() {
   // Reset Form
   el.spawnFormSection?.classList.remove('hidden');
   el.spawnProgressSection?.classList.add('hidden');
+
+  // Reset Footer Buttons: Show Mulai & Batal, hide Running & Done
+  el.confirmSpawnBtn?.classList.remove('hidden');
+  el.cancelSpawnBtn?.classList.remove('hidden');
+  document.getElementById('spawnRunningNotice')?.classList.add('hidden');
+  document.getElementById('closeSpawnDoneBtn')?.classList.add('hidden');
+
   if (el.confirmSpawnBtn) {
     el.confirmSpawnBtn.disabled = false;
     el.confirmSpawnBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span>Mulai Pembuatan</span>';
@@ -852,8 +859,13 @@ async function startBatchSpawn() {
   // Switch UI to in-progress
   el.spawnFormSection?.classList.add('hidden');
   el.spawnProgressSection?.classList.remove('hidden');
-  if (el.confirmSpawnBtn) el.confirmSpawnBtn.disabled = true;
-  if (el.cancelSpawnBtn) el.cancelSpawnBtn.disabled = true;
+
+  // HIDE "Mulai Pembuatan" & "Batal" during creation process!
+  el.confirmSpawnBtn?.classList.add('hidden');
+  el.cancelSpawnBtn?.classList.add('hidden');
+  document.getElementById('spawnRunningNotice')?.classList.remove('hidden');
+  document.getElementById('closeSpawnDoneBtn')?.classList.add('hidden');
+
   if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = true;
 
   if (el.spawnProgressText) {
@@ -943,6 +955,10 @@ async function startBatchSpawn() {
               showToast(ev.message);
               fetchAccountsAndStats();
 
+              document.getElementById('spawnRunningNotice')?.classList.add('hidden');
+              document.getElementById('closeSpawnDoneBtn')?.classList.remove('hidden');
+              if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = false;
+
               setTimeout(() => {
                 closeSpawnModal();
               }, 2500);
@@ -966,7 +982,8 @@ async function startBatchSpawn() {
     appendLog(`Error: ${err.message}`);
     showToast(`Gagal membuat akun: ${err.message}`);
   } finally {
-    if (el.cancelSpawnBtn) el.cancelSpawnBtn.disabled = false;
+    document.getElementById('spawnRunningNotice')?.classList.add('hidden');
+    document.getElementById('closeSpawnDoneBtn')?.classList.remove('hidden');
     if (el.closeSpawnModalBtn) el.closeSpawnModalBtn.disabled = false;
   }
 }
