@@ -291,8 +291,8 @@
                 </div>
               </div>
 
-              <!-- Live Search Progress Tracker -->
-              <div id="searchProgressSection" class="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/50 space-y-2.5">
+              <!-- Live Search Progress Tracker (Active search only) -->
+              <div id="searchProgressSection" class="hidden p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/50">
                 <div class="flex items-center justify-between text-xs">
                   <div class="flex items-center gap-2.5">
                     <span id="progressSpinner" class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin shrink-0"></span>
@@ -300,24 +300,24 @@
                   </div>
                   <span id="searchProgressTimer" class="font-mono text-slate-500 dark:text-zinc-500 text-[11px]">0.0s</span>
                 </div>
+              </div>
                 
-                <!-- Thinking Accordion -->
-                <div id="thinkingBox" class="hidden pt-2 border-t border-slate-200 dark:border-zinc-700/50">
-                  <button id="thinkingToggleBtn" type="button" class="w-full flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 transition py-0.5">
-                    <div class="flex items-center gap-1.5 font-medium">
-                      <svg id="thinkingChevron" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                      <span>Proses Penalaran (Thinking Process)</span>
-                    </div>
-                    <span id="thinkingDuration" class="text-[10px] font-mono text-slate-500 dark:text-zinc-500"></span>
-                  </button>
-                  <div id="thinkingContent" class="hidden mt-2.5 pl-3 border-l-2 border-teal-600 dark:border-teal-500/40 text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-mono space-y-1">
-                    <!-- Live thinking steps injected here -->
+              <!-- Thinking Accordion (Independent from search progress) -->
+              <div id="thinkingBox" class="hidden p-3 rounded-xl bg-slate-50/70 dark:bg-zinc-800/30 border border-slate-200/80 dark:border-zinc-800">
+                <button id="thinkingToggleBtn" type="button" class="w-full flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 transition py-0.5">
+                  <div class="flex items-center gap-1.5 font-medium">
+                    <svg id="thinkingChevron" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <span>Proses Penalaran (Thinking Process)</span>
                   </div>
+                  <span id="thinkingDuration" class="text-[10px] font-mono text-slate-500 dark:text-zinc-500"></span>
+                </button>
+                <div id="thinkingContent" class="hidden mt-2.5 pl-3 border-l-2 border-teal-600 dark:border-teal-500/40 text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-mono space-y-1">
+                  <!-- Live thinking steps injected here -->
                 </div>
               </div>
 
               <!-- Academic Literature & Sources Cards (Consensus / SciSpace Style) -->
-              <div id="sourcesContainer" class="space-y-3 pt-1">
+              <div id="sourcesContainer" class="hidden space-y-3 pt-1">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full bg-teal-500"></span>
@@ -332,17 +332,17 @@
                 </div>
               </div>
 
-              <!-- Answer Markdown & Structured Topic Cards -->
+              <!-- Answer Markdown & Dynamic Analysis -->
               <div class="pt-4 border-t border-slate-100 dark:border-zinc-800 space-y-3">
                 <div class="flex items-center gap-2">
                   <div class="w-5 h-5 rounded bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xs">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                   </div>
-                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Sintesis & Rekomendasi Topik</h4>
+                  <h4 id="answerSectionTitle" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Jawaban & Hasil Analisis</h4>
                 </div>
 
                 <div id="answerMarkdown" class="prose max-w-none text-slate-800 dark:text-zinc-200 leading-relaxed font-sans">
-                  <!-- Formatted answer with topic cards -->
+                  <!-- Formatted answer with dynamic layout -->
                 </div>
               </div>
 

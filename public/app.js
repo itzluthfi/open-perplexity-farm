@@ -31,8 +31,10 @@ const el = {
   displayQueryText: document.getElementById('displayQueryText'),
   displayQueryFocusBadge: document.getElementById('displayQueryFocusBadge'),
   displayAssistantModelBadge: document.getElementById('displayAssistantModelBadge'),
+  sourcesContainer: document.getElementById('sourcesContainer'),
   sourcesGrid: document.getElementById('sourcesGrid'),
   sourceCountBadge: document.getElementById('sourceCountBadge'),
+  answerSectionTitle: document.getElementById('answerSectionTitle'),
   answerMarkdown: document.getElementById('answerMarkdown'),
   copyAnswerBtn: document.getElementById('copyAnswerBtn'),
   exportApaBtn: document.getElementById('exportApaBtn'),
@@ -302,6 +304,8 @@ function startNewChat() {
   el.conversationContainer?.classList.add('hidden');
   el.floatingInputBar?.classList.add('hidden');
   if (el.searchProgressSection) el.searchProgressSection.classList.add('hidden');
+  if (el.thinkingBox) el.thinkingBox.classList.add('hidden');
+  if (el.sourcesContainer) el.sourcesContainer.classList.add('hidden');
   if (el.promptInput) {
     el.promptInput.value = '';
     el.promptInput.focus();
@@ -378,92 +382,134 @@ async function handleFollowupSubmit() {
   await executeSearch(followUpSession);
 }
 
-// Smart Academic Proposal & Topic Formatter
+// Configure marked.js for GFM and clean line breaks
+if (typeof marked !== 'undefined') {
+  marked.setOptions({
+    gfm: true,
+    breaks: true
+  });
+}
+
+// Citation linkifier & non-destructive markdown formatter
+function formatCitations(text, sources = []) {
+  if (!text) return '';
+
+  // 1. Convert grouped bracket citations like [1, 2, 3] or [1, 4] into separate [1] [2] [3]
+  let result = text.replace(/\[(\d+(?:\s*,\s*\d+)+)\]/g, (match, group) => {
+    const nums = group.split(',').map(n => n.trim()).filter(Boolean);
+    return nums.map(n => `[${n}]`).join(' ');
+  });
+
+  // 2. Convert markdown citation links like [1](http...) into styled citation pills
+  result = result.replace(/\[(\d+)\]\((https?:\/\/[^\s)]+)\)/g, (match, p1, url) => {
+    const idx = parseInt(p1, 10);
+    const src = sources[idx - 1];
+    const domain = src && src.domain ? src.domain : (url ? new URL(url).hostname : `Sumber ${idx}`);
+    const title = src && src.title ? escapeHtml(src.title) : domain;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="citation-pill" title="${title} [${idx}]"><span>[${idx}]</span></a>`;
+  });
+
+  // 3. Convert standalone [1], [2], [3] into styled interactive citation pills
+  result = result.replace(/\[(\d+)\](?!\()/g, (match, p1) => {
+    const idx = parseInt(p1, 10);
+    const src = sources[idx - 1];
+    const url = src && src.url ? src.url : '#';
+    const domain = src && src.domain ? src.domain : (src && src.url ? new URL(src.url).hostname : `Sumber ${idx}`);
+    const title = src && src.title ? escapeHtml(src.title) : domain;
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="citation-pill" title="${title}"><span>[${idx}]</span></a>`;
+  });
+
+  // 4. Convert bracket domains or reference citations like [sinta.kemdiktisaintek.go] or [marcelo.yannuzzi]
+  result = result.replace(/\[([a-zA-Z0-9_.-]{3,45})\](?!\()/g, (match, label) => {
+    if (/^(?:x|X|\s)$/.test(label)) return match;
+    const isDomain = label.includes('.') && !label.startsWith('.') && !label.endsWith('.');
+    const matchedSrc = sources.find(s => s.domain && s.domain.toLowerCase().includes(label.toLowerCase()));
+    
+    let url = '#';
+    if (matchedSrc && matchedSrc.url) {
+      url = matchedSrc.url;
+    } else if (isDomain) {
+      url = `https://${label}`;
+    } else {
+      url = `https://scholar.google.com/scholar?q=${encodeURIComponent(label)}`;
+    }
+
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="citation-pill" title="Rujukan: ${escapeHtml(label)}"><span>${escapeHtml(label)}</span></a>`;
+  });
+
+  return result;
+}
+
+// Dynamic Markdown Sanitizer: Preserves all content naturally without rigid card clipping
 function sanitizeAndFormatMarkdown(rawText, sources = []) {
   if (!rawText) return '';
 
-  let cleaned = rawText
-    .replace(/^[\s\S]*?(Jawaban:|Berikut adalah|Hasil riset:|Sintesis:)/i, '')
-    .trim();
+  // Clean raw think tags if present in body
+  let cleaned = rawText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
-  if (!cleaned) cleaned = rawText.trim();
+  // Convert citations to interactive pills
+  cleaned = formatCitations(cleaned, sources);
 
-  // 1. Interactive Citation Pills: [1], [2], [3]
-  cleaned = cleaned.replace(/\[(\d+)\]/g, (match, p1) => {
-    const idx = parseInt(p1, 10);
-    const src = sources[idx - 1];
-    const url = src ? src.url : '#';
-    const domain = src ? (src.domain || 'sumber') : `sumber ${idx}`;
-    return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="citation-pill" title="${domain} [${idx}]"><span>[${idx}]</span></a>`;
+  return cleaned;
+}
+
+// Enhance code blocks with one-click copy button
+function enhanceCodeBlocks(container) {
+  if (!container) return;
+  const preElements = container.querySelectorAll('pre');
+  preElements.forEach((pre) => {
+    if (pre.querySelector('.code-copy-btn')) return;
+    pre.classList.add('relative', 'group');
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'code-copy-btn absolute top-2 right-2 px-2 py-1 rounded bg-slate-200/80 hover:bg-slate-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-600 dark:text-zinc-300 text-[10px] font-mono font-semibold transition opacity-0 group-hover:opacity-100 flex items-center gap-1';
+    copyBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg><span>Salin</span>';
+    copyBtn.addEventListener('click', () => {
+      const code = pre.querySelector('code')?.innerText || pre.innerText;
+      navigator.clipboard.writeText(code);
+      copyBtn.innerHTML = '<span class="text-teal-600 dark:text-teal-400">Tersalin!</span>';
+      setTimeout(() => {
+        copyBtn.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg><span>Salin</span>';
+      }, 1500);
+    });
+    pre.appendChild(copyBtn);
   });
+}
 
-  // 2. Structured Topic Card Parser (Transforms proposals with Fokus & Kebaruan into interactive cards)
-  const lines = cleaned.split('\n');
-  let outputLines = [];
-  let currentTopic = null;
-  let topicCounter = 1;
-  let inTopicSection = false;
+// Wrap tables for smooth responsive mobile overflow
+function wrapTables(container) {
+  if (!container) return;
+  const tables = container.querySelectorAll('table');
+  tables.forEach((table) => {
+    if (table.parentElement.classList.contains('overflow-x-auto')) return;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'overflow-x-auto my-3 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm';
+    table.parentNode.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+}
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) {
-      outputLines.push('');
-      continue;
-    }
+// Unified Markdown & Math Render Helper
+function renderMarkdownContent(targetEl, rawMarkdown, sources = []) {
+  if (!targetEl) return;
+  const formatted = sanitizeAndFormatMarkdown(rawMarkdown, sources);
+  targetEl.innerHTML = marked.parse(formatted);
 
-    if (/^(?:Usulan Topik|Rekomendasi Topik|Topik Penelitian|Daftar Usulan)/i.test(line)) {
-      inTopicSection = true;
-      outputLines.push(`### ${line.replace(/^#+\s*/, '')}`);
-      continue;
-    }
+  enhanceCodeBlocks(targetEl);
+  wrapTables(targetEl);
 
-    const isFokus = /^(?:Fokus|Focus):\s*(.+)/i.exec(line);
-    const isKebaruan = /^(?:Kebaruan|Novelty|Keunggulan):\s*(.+)/i.exec(line);
-
-    if (isFokus) {
-      if (currentTopic) currentTopic.fokus = isFokus[1];
-    } else if (isKebaruan) {
-      if (currentTopic) {
-        currentTopic.kebaruan = isKebaruan[1];
-        // Render Academic Proposal Card
-        const cardHtml = `
-<div class="topic-card my-4 p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-3">
-  <div class="flex items-center justify-between gap-2">
-    <span class="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20">Topik Rekomendasi #${topicCounter++}</span>
-    <span class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">Skripsi / Tugas Akhir</span>
-  </div>
-  <h4 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">${escapeHtml(currentTopic.title)}</h4>
-  <div class="space-y-2.5 pt-1 text-xs sm:text-sm">
-    <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200/60 dark:border-zinc-700/50">
-      <span class="font-bold text-slate-800 dark:text-zinc-200 block mb-1">Fokus Penelitian:</span>
-      <p class="text-slate-600 dark:text-zinc-400 leading-relaxed">${currentTopic.fokus}</p>
-    </div>
-    <div class="p-3 rounded-xl bg-teal-50/70 dark:bg-teal-950/20 border border-teal-200/80 dark:border-teal-800/40">
-      <span class="font-bold text-teal-800 dark:text-teal-300 block mb-1">Kebaruan / Novelty:</span>
-      <p class="text-slate-700 dark:text-zinc-300 leading-relaxed">${currentTopic.kebaruan}</p>
-    </div>
-  </div>
-</div>`;
-        outputLines.push(cardHtml);
-        currentTopic = null;
-      }
-    } else if (inTopicSection && line.length > 20 && !line.startsWith('-') && !line.startsWith('*') && !line.startsWith('#')) {
-      currentTopic = { title: line, fokus: '', kebaruan: '' };
-    } else {
-      if (currentTopic && !currentTopic.fokus) {
-        currentTopic.title += ' ' + line;
-      } else {
-        outputLines.push(line);
-      }
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(targetEl, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false }
+        ],
+        throwOnError: false
+      });
+    } catch (e) {
+      console.warn('KaTeX render error:', e);
     }
   }
-
-  let result = outputLines.join('\n');
-
-  // 3. Elevate section headings
-  result = result.replace(/^([A-Z0-9\s-]{3,35}):\s*$/gm, '### $1');
-
-  return result;
 }
 
 async function executeSearch(session) {
@@ -471,15 +517,31 @@ async function executeSearch(session) {
   if (el.submitBtn) el.submitBtn.disabled = true;
   if (el.followUpSubmitBtn) el.followUpSubmitBtn.disabled = true;
 
+  // Dynamically update Answer Section Title based on Focus
+  if (el.answerSectionTitle) {
+    const focus = session.focus || 'academic';
+    if (focus === 'academic') {
+      el.answerSectionTitle.innerText = 'Sintesis & Literatur Akademik';
+    } else if (focus === 'writing') {
+      el.answerSectionTitle.innerText = 'Hasil Generasi & Draf Penulisan';
+    } else {
+      el.answerSectionTitle.innerText = 'Jawaban & Ringkasan Penelusuran';
+    }
+  }
+
   // Reset Answer & Progress States
   if (el.answerMarkdown) el.answerMarkdown.innerHTML = '<span class="text-slate-400 dark:text-zinc-500 italic">Menunggu respons dari armada live Perplexity...</span>';
   if (el.sourcesGrid) el.sourcesGrid.innerHTML = '';
   if (el.sourceCountBadge) el.sourceCountBadge.innerText = '0';
+  if (el.sourcesContainer) el.sourcesContainer.classList.add('hidden');
   if (el.thinkingBox) el.thinkingBox.classList.add('hidden');
   if (el.thinkingContent) el.thinkingContent.innerHTML = '';
 
-  // Show Progress tracker
+  // Show Progress tracker with active spinner
   el.searchProgressSection?.classList.remove('hidden');
+  if (el.progressSpinner) {
+    el.progressSpinner.className = 'w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin shrink-0';
+  }
   const timerStart = Date.now();
   const timerInterval = setInterval(() => {
     const elapsed = ((Date.now() - timerStart) / 1000).toFixed(1);
@@ -511,6 +573,9 @@ async function executeSearch(session) {
     const data = await response.json();
     clearInterval(timerInterval);
 
+    // Hide search progress bar immediately on successful arrival
+    el.searchProgressSection?.classList.add('hidden');
+
     const message = data.choices?.[0]?.message || {};
     const rawAnswer = message.content || 'Tidak ada konten teks yang dihasilkan.';
     const sources = data.sources || message.sources || [];
@@ -521,16 +586,11 @@ async function executeSearch(session) {
     session.thinking = thinking;
     saveSessions();
 
-    updateProgressStep('Sintesis jawaban ilmiah selesai.');
-    if (el.progressSpinner) {
-      el.progressSpinner.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0';
-    }
-
-    // Render Academic Literature Cards
+    // Render Academic Literature Cards (auto hides if sources is empty)
     renderSources(sources);
 
     // Render Thinking accordion if available
-    if (thinking && thinking.length > 0) {
+    if (thinking && (Array.isArray(thinking) ? thinking.length > 0 : Boolean(thinking))) {
       el.thinkingBox?.classList.remove('hidden');
       if (el.thinkingDuration) {
         el.thinkingDuration.innerText = `${((Date.now() - timerStart) / 1000).toFixed(1)}s penalaran`;
@@ -540,27 +600,17 @@ async function executeSearch(session) {
           ? thinking.map(t => `<div class="py-0.5">• ${escapeHtml(t)}</div>`).join('')
           : `<div class="whitespace-pre-wrap">${escapeHtml(thinking)}</div>`;
       }
+    } else {
+      el.thinkingBox?.classList.add('hidden');
     }
 
-    // Format & Render Answer Markdown
-    const formattedMarkdown = sanitizeAndFormatMarkdown(rawAnswer, sources);
-    if (el.answerMarkdown) {
-      el.answerMarkdown.innerHTML = marked.parse(formattedMarkdown);
-
-      if (window.renderMathInElement) {
-        renderMathInElement(el.answerMarkdown, {
-          delimiters: [
-            { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false }
-          ],
-          throwOnError: false
-        });
-      }
-    }
+    // Format & Render Answer Markdown Dynamically
+    renderMarkdownContent(el.answerMarkdown, rawAnswer, sources);
 
   } catch (err) {
     clearInterval(timerInterval);
     updateProgressStep(`Gagal: ${err.message}`);
+    el.searchProgressSection?.classList.remove('hidden');
     if (el.progressSpinner) {
       el.progressSpinner.className = 'w-3.5 h-3.5 rounded-full bg-red-500 shrink-0';
     }
@@ -621,12 +671,15 @@ function getRelevanceScore(index) {
 function renderSources(sources) {
   if (!el.sourcesGrid) return;
   el.sourcesGrid.innerHTML = '';
-  if (el.sourceCountBadge) el.sourceCountBadge.innerText = sources.length;
 
-  if (sources.length === 0) {
-    el.sourcesGrid.innerHTML = '<div class="col-span-full text-xs text-slate-400 dark:text-zinc-500 italic p-3">Tidak ada rujukan eksternal.</div>';
+  if (!sources || sources.length === 0) {
+    if (el.sourceCountBadge) el.sourceCountBadge.innerText = '0';
+    el.sourcesContainer?.classList.add('hidden');
     return;
   }
+
+  el.sourcesContainer?.classList.remove('hidden');
+  if (el.sourceCountBadge) el.sourceCountBadge.innerText = sources.length;
 
   sources.forEach((src, idx) => {
     const card = document.createElement('a');
@@ -1179,6 +1232,10 @@ function loadHistoricalSession(sess) {
   el.conversationContainer?.classList.remove('hidden');
   el.conversationContainer?.classList.add('flex');
   el.floatingInputBar?.classList.remove('hidden');
+
+  // Explicitly hide active search progress tracker
+  el.searchProgressSection?.classList.add('hidden');
+
   if (el.displayQueryText) el.displayQueryText.innerText = sess.query;
   if (el.displayQueryFocusBadge) {
     el.displayQueryFocusBadge.innerText = sess.focus === 'academic' ? 'Fokus Akademik' : 'Pencarian Web';
@@ -1187,11 +1244,28 @@ function loadHistoricalSession(sess) {
     el.displayAssistantModelBadge.innerText = `Model: ${(sess.model || '').split('/').pop() || 'Sonar Web'}`;
   }
 
-  renderSources(sess.sources || []);
-  if (el.answerMarkdown) {
-    const formatted = sanitizeAndFormatMarkdown(sess.answer || '', sess.sources || []);
-    el.answerMarkdown.innerHTML = marked.parse(formatted);
+  // Update dynamic answer section title
+  if (el.answerSectionTitle) {
+    const f = sess.focus || 'academic';
+    el.answerSectionTitle.innerText = f === 'academic' ? 'Sintesis & Literatur Akademik' : (f === 'writing' ? 'Hasil Generasi & Draf Penulisan' : 'Jawaban & Ringkasan Penelusuran');
   }
+
+  // Thinking Accordion state
+  if (sess.thinking && (Array.isArray(sess.thinking) ? sess.thinking.length > 0 : Boolean(sess.thinking))) {
+    el.thinkingBox?.classList.remove('hidden');
+    if (el.thinkingDuration) el.thinkingDuration.innerText = 'Penalaran Tersimpan';
+    if (el.thinkingContent) {
+      el.thinkingContent.innerHTML = Array.isArray(sess.thinking)
+        ? sess.thinking.map(t => `<div class="py-0.5">• ${escapeHtml(t)}</div>`).join('')
+        : `<div class="whitespace-pre-wrap">${escapeHtml(sess.thinking)}</div>`;
+    }
+  } else {
+    el.thinkingBox?.classList.add('hidden');
+  }
+
+  // Render Literature Cards & Formatted Answer
+  renderSources(sess.sources || []);
+  renderMarkdownContent(el.answerMarkdown, sess.answer || '', sess.sources || []);
 }
 
 function clearAllSessions() {
