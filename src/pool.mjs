@@ -100,7 +100,9 @@ export class AccountPoolManager {
         usageCount: acc.usageCount,
         status: acc.status,
         lastUsed: acc.lastUsed,
-        cooldownUntil: acc.cooldownUntil
+        cooldownUntil: acc.cooldownUntil,
+        lastVerified: acc.lastVerified || null,
+        expiresAt: acc.expiresAt || null
       };
     }
     const payload = {
@@ -134,10 +136,12 @@ export class AccountPoolManager {
         index: idx,
         id: a.id,
         email: a.email,
-        status: isCooldown ? "cooling_down" : "active",
+        status: isCooldown ? "cooling_down" : (a.status || "active"),
         usageCount: a.usageCount || 0,
         lastUsed: a.lastUsed ? new Date(a.lastUsed).toLocaleString() : "Never",
         lastUsedRaw: a.lastUsed || 0,
+        lastVerified: a.lastVerified || null,
+        expiresAt: a.expiresAt || null,
         cooldownRemainingSec,
         isActive: idx === this.activeIndex
       };
@@ -294,5 +298,104 @@ export class AccountPoolManager {
       this.activeIndex = (this.activeIndex + 1) % this.accounts.length;
       this.saveRegistry();
     }
+  }
+
+  async activateAccount(id, cdpSession) {
+    this.syncAccounts();
+    const idx = this.accounts.findIndex(a => a.id === id || a.email === id);
+    if (idx === -1) return null;
+
+    this.activeIndex = idx;
+    this.saveRegistry();
+    const acc = this.accounts[idx];
+    if (cdpSession) {
+      await this.applyAccountToCdp(cdpSession, acc);
+    }
+    return acc;
+  }
+
+  async verifyAccount(id) {
+    this.syncAccounts();
+    const acc = this.accounts.find(a => a.id === id || a.email === id);
+    if (!acc) return { id, email: id, isValid: false, statusText: "Akun tidak ditemukan", latencyMs: 0 };
+
+    const cookies = acc.raw?.cookies || [];
+    if (cookies.length === 0) {
+      return { id: acc.id, email: acc.email, isValid: false, statusText: "Tidak ada session cookies", latencyMs: 0 };
+    }
+
+    const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join("; ");
+    const start = Date.now();
+
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+
+      const res = await fetch("https://www.perplexity.ai/api/auth/session", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          "Cookie": cookieHeader,
+          "Accept": "application/json"
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timer);
+      const latencyMs = Date.now() - start;
+
+      if (!res.ok) {
+        acc.status = "invalid";
+        this.saveRegistry();
+        return {
+          id: acc.id,
+          email: acc.email,
+          isValid: false,
+          statusText: `HTTP ${res.status}: Sesi tidak valid`,
+          latencyMs
+        };
+      }
+
+      const data = await res.json();
+      if (data && data.user && data.user.email) {
+        acc.status = "active";
+        acc.lastVerified = Date.now();
+        acc.expiresAt = data.expires;
+        this.saveRegistry();
+        return {
+          id: acc.id,
+          email: acc.email,
+          isValid: true,
+          statusText: `Valid (${latencyMs}ms)`,
+          latencyMs,
+          expires: data.expires,
+          user: data.user
+        };
+      } else {
+        acc.status = "invalid";
+        this.saveRegistry();
+        return {
+          id: acc.id,
+          email: acc.email,
+          isValid: false,
+          statusText: "Sesi expired / butuh login",
+          latencyMs
+        };
+      }
+    } catch (err) {
+      const latencyMs = Date.now() - start;
+      return {
+        id: acc.id,
+        email: acc.email,
+        isValid: false,
+        statusText: `Error: ${err.message}`,
+        latencyMs
+      };
+    }
+  }
+
+  async verifyAllAccounts() {
+    this.syncAccounts();
+    const results = await Promise.all(this.accounts.map(a => this.verifyAccount(a.id)));
+    return results;
   }
 }

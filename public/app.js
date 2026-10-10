@@ -6,7 +6,8 @@ const state = {
   isGenerating: false,
   accounts: [],
   poolStats: null,
-  activeAccount: null
+  activeAccount: null,
+  verificationResults: {}
 };
 
 // DOM Elements
@@ -43,6 +44,7 @@ const el = {
   clearHistoryBtn: document.getElementById('clearHistoryBtn'),
   bottomAccountEmail: document.getElementById('bottomAccountEmail'),
   bottomAccountStatus: document.getElementById('bottomAccountStatus'),
+  sidebarAccountSelect: document.getElementById('sidebarAccountSelect'),
   quickRotateBtn: document.getElementById('quickRotateBtn'),
   activePoolBadge: document.getElementById('activePoolBadge'),
   headerCdpStatus: document.getElementById('headerCdpStatus'),
@@ -53,6 +55,8 @@ const el = {
   farmStrategySelect: document.getElementById('farmStrategySelect'),
   farmRotateBtn: document.getElementById('farmRotateBtn'),
   farmSpawnBtn: document.getElementById('farmSpawnBtn'),
+  verifyAllBtn: document.getElementById('verifyAllBtn'),
+  verifyAllBtnText: document.getElementById('verifyAllBtnText'),
   farmAccountTableBody: document.getElementById('farmAccountTableBody'),
   apaModal: document.getElementById('apaModal'),
   closeApaModalBtn: document.getElementById('closeApaModalBtn'),
@@ -232,6 +236,18 @@ function setupEventListeners() {
     } catch (err) {
       console.error(err);
     }
+  });
+
+  // Sidebar Account Selector Dropdown (Pilih Akun Langsung)
+  el.sidebarAccountSelect?.addEventListener('change', (e) => {
+    if (e.target.value) {
+      activateAccount(e.target.value);
+    }
+  });
+
+  // Verify All Accounts Button
+  el.verifyAllBtn?.addEventListener('click', () => {
+    verifyAllAccounts();
   });
 
   // Global Keyboard Shortcut: Ctrl + K for New Chat
@@ -659,6 +675,7 @@ async function fetchAccountsAndStats() {
     if (json.data) {
       state.accounts = json.data;
       renderAccountTable(json.data);
+      updateSidebarAccountSelect(json.data);
     }
 
     if (json.stats) {
@@ -682,12 +699,25 @@ async function fetchAccountsAndStats() {
   }
 }
 
+function updateSidebarAccountSelect(accounts) {
+  if (!el.sidebarAccountSelect) return;
+  el.sidebarAccountSelect.innerHTML = '';
+  
+  accounts.forEach((acc) => {
+    const opt = document.createElement('option');
+    opt.value = acc.id;
+    opt.textContent = `${acc.email} ${acc.isActive ? '★ (Sedang Digunakan)' : `[${acc.usageCount} kueri]`}`;
+    if (acc.isActive) opt.selected = true;
+    el.sidebarAccountSelect.appendChild(opt);
+  });
+}
+
 function renderAccountTable(accounts) {
   if (!el.farmAccountTableBody) return;
   el.farmAccountTableBody.innerHTML = '';
 
   if (accounts.length === 0) {
-    el.farmAccountTableBody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400 dark:text-zinc-500 italic">Belum ada akun di pool. Klik "Buat Akun Otomatis" untuk memulai.</td></tr>';
+    el.farmAccountTableBody.innerHTML = '<tr><td colspan="7" class="p-4 text-center text-slate-400 dark:text-zinc-500 italic">Belum ada akun di pool. Klik "Buat Akun Otomatis" untuk memulai.</td></tr>';
     return;
   }
 
@@ -702,17 +732,51 @@ function renderAccountTable(accounts) {
       ? `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-[10px] font-mono"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Cooldown (${acc.cooldownRemainingSec}s)</span>`
       : `<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-mono"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Aktif</span>`;
 
-    const activeStar = acc.isActive ? '<span class="text-teal-600 dark:text-teal-400 ml-1.5 text-[11px] font-bold">[Aktif]</span>' : '';
+    const activeBadge = acc.isActive
+      ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-500/20 dark:text-teal-300 text-[10px] font-bold">Sedang Dipakai</span>'
+      : '';
+
+    // Live validation status
+    const cachedVerif = state.verificationResults[acc.id];
+    let validityHtml = '';
+    if (cachedVerif) {
+      if (cachedVerif.isValid) {
+        validityHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-mono font-bold" title="Exp: ${cachedVerif.expires || '-'}"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Valid (${cachedVerif.latencyMs}ms)</span>`;
+      } else {
+        validityHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20 text-[10px] font-mono font-bold" title="${cachedVerif.statusText}"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>${cachedVerif.statusText}</span>`;
+      }
+    } else if (acc.lastVerified) {
+      validityHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-[10px] font-mono font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Terverifikasi</span>`;
+    } else {
+      validityHtml = `<span class="text-[11px] font-mono text-slate-400 dark:text-zinc-500">Belum diuji</span>`;
+    }
 
     row.innerHTML = `
       <td class="p-3 text-center text-slate-400 dark:text-zinc-500 font-mono">${i + 1}</td>
-      <td class="p-3 font-mono text-slate-800 dark:text-zinc-200">${escapeHtml(acc.email)} ${activeStar}</td>
+      <td class="p-3 font-mono text-slate-800 dark:text-zinc-200">
+        <div class="flex items-center gap-2">
+          <span>${escapeHtml(acc.email)}</span>
+          ${activeBadge}
+        </div>
+      </td>
       <td class="p-3">${statusBadge}</td>
+      <td class="p-3" id="valid-col-${acc.id}">${validityHtml}</td>
       <td class="p-3 font-mono text-slate-700 dark:text-zinc-300">${acc.usageCount}</td>
       <td class="p-3 text-slate-500 dark:text-zinc-400">${acc.lastUsed}</td>
-      <td class="p-3 text-right space-x-1.5">
-        ${isCooldown ? `<button onclick="resetAccountCooldown('${acc.id}')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-teal-700 dark:text-teal-400 border border-slate-200 dark:border-zinc-700 text-[10px] font-semibold">Reset</button>` : ''}
-        <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 rounded bg-slate-100 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-slate-200 dark:border-zinc-700 text-[10px] font-semibold">Hapus</button>
+      <td class="p-3 text-right">
+        <div class="flex items-center justify-end gap-1.5">
+          ${!acc.isActive ? `
+            <button onclick="activateAccount('${acc.id}')" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-700 dark:bg-teal-500/10 dark:hover:bg-teal-500/20 dark:text-teal-400 border border-teal-200 dark:border-teal-500/20 text-[10px] font-semibold transition" title="Gunakan akun ini sebagai akun aktif">
+              Gunakan
+            </button>
+          ` : ''}
+          <button id="verify-btn-${acc.id}" onclick="verifySingleAccount('${acc.id}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 border border-slate-300 dark:border-zinc-700 text-[10px] font-semibold transition flex items-center gap-1" title="Uji koneksi ke Perplexity">
+            <svg class="w-3 h-3 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <span>Tes Koneksi</span>
+          </button>
+          ${isCooldown ? `<button onclick="resetAccountCooldown('${acc.id}')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-teal-700 dark:text-teal-400 border border-slate-200 dark:border-zinc-700 text-[10px] font-semibold">Reset</button>` : ''}
+          <button onclick="deleteAccount('${acc.id}')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 border border-slate-200 dark:border-zinc-700 text-[10px] font-semibold">Hapus</button>
+        </div>
       </td>
     `;
     el.farmAccountTableBody.appendChild(row);
@@ -931,6 +995,91 @@ window.deleteAccount = async function(id) {
     fetchAccountsAndStats();
   } catch (err) {
     console.error(err);
+  }
+};
+
+window.activateAccount = async function(id) {
+  try {
+    showToast('Mengalihkan akun aktif & menginjeksi cookies ke browser...');
+    const res = await fetch('/v1/accounts/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      showToast(`Akun aktif berhasil dialihkan ke: ${data.activeAccount}`);
+      fetchAccountsAndStats();
+    } else {
+      showToast(`Gagal mengalihkan akun: ${data.message || 'Error'}`);
+    }
+  } catch (err) {
+    showToast('Error aktivasi akun: ' + err.message);
+  }
+};
+
+window.verifySingleAccount = async function(id) {
+  const btn = document.getElementById(`verify-btn-${id}`);
+  const col = document.getElementById(`valid-col-${id}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="w-3 h-3 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></span><span>Menguji...</span>';
+  }
+  if (col) {
+    col.innerHTML = '<span class="text-[10px] font-mono text-teal-600 dark:text-teal-400 flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-teal-500 animate-ping"></span>Ping Perplexity...</span>';
+  }
+
+  try {
+    const res = await fetch('/v1/accounts/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const json = await res.json();
+    const result = json.result || {};
+    state.verificationResults[id] = result;
+
+    if (result.isValid) {
+      showToast(`Akun ${result.email} VALID & AKTIF (${result.latencyMs}ms)`);
+    } else {
+      showToast(`Akun ${result.email} TIDAK VALID: ${result.statusText}`);
+    }
+    fetchAccountsAndStats();
+  } catch (err) {
+    showToast('Gagal verifikasi akun: ' + err.message);
+    if (col) col.innerHTML = `<span class="text-xs text-red-500 font-mono">Error: ${err.message}</span>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+};
+
+window.verifyAllAccounts = async function() {
+  if (el.verifyAllBtn) {
+    el.verifyAllBtn.disabled = true;
+    if (el.verifyAllBtnText) el.verifyAllBtnText.innerText = 'Menguji Seluruh Akun...';
+  }
+  showToast('Memulai uji koneksi seluruh armada ke Perplexity API...');
+
+  try {
+    const res = await fetch('/v1/accounts/verify-all', { method: 'POST' });
+    const json = await res.json();
+    const results = json.results || [];
+    
+    let validCount = 0;
+    results.forEach(r => {
+      state.verificationResults[r.id] = r;
+      if (r.isValid) validCount++;
+    });
+
+    showToast(`Uji selesai: ${validCount} dari ${results.length} akun terverifikasi VALID.`);
+    fetchAccountsAndStats();
+  } catch (err) {
+    showToast('Gagal menguji seluruh akun: ' + err.message);
+  } finally {
+    if (el.verifyAllBtn) {
+      el.verifyAllBtn.disabled = false;
+      if (el.verifyAllBtnText) el.verifyAllBtnText.innerText = 'Tes Koneksi Semua Akun';
+    }
   }
 };
 

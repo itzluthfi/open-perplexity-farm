@@ -320,6 +320,57 @@ export async function createServer(options = {}) {
       return;
     }
 
+    if (pathname === "/v1/accounts/activate" && req.method === "POST") {
+      let bodyStr = "";
+      req.on("data", chunk => bodyStr += chunk);
+      req.on("end", async () => {
+        try {
+          const body = JSON.parse(bodyStr || "{}");
+          const activated = await pool.activateAccount(body.id, cdp);
+          if (activated) {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ status: "ok", activeAccount: activated.email }));
+          } else {
+            res.writeHead(404, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ status: "not_found", message: "Akun tidak ditemukan" }));
+          }
+        } catch (e) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+
+    if (pathname === "/v1/accounts/verify" && req.method === "POST") {
+      let bodyStr = "";
+      req.on("data", chunk => bodyStr += chunk);
+      req.on("end", async () => {
+        try {
+          const body = JSON.parse(bodyStr || "{}");
+          const result = await pool.verifyAccount(body.id);
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ status: "ok", result, stats: pool.getStats() }));
+        } catch (e) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+
+    if (pathname === "/v1/accounts/verify-all" && req.method === "POST") {
+      try {
+        const results = await pool.verifyAllAccounts();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "ok", results, stats: pool.getStats() }));
+      } catch (e) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+      return;
+    }
+
     // 3. Models List
     if (pathname === "/v1/models") {
       res.writeHead(200, { "Content-Type": "application/json" });
