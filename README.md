@@ -26,6 +26,28 @@ It provides both a modern, high-contrast Web Studio interface and a standard Ope
 
 ---
 
+## Interface Showcase
+
+<div align="center">
+  <img src="./assets/preview-chat-academic.png" alt="Open Perplexity Academic Research Studio" width="100%" style="border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.1);" />
+</div>
+
+<details open>
+<summary><b>Click to expand full UI Gallery (Fleet Manager, Account Spawner, Light & Dark Mode)</b></summary>
+<br />
+
+| Academic Search Studio (Light) | Fleet & Account Manager |
+|:---:|:---:|
+| <img src="./assets/preview-studio.png" width="100%" alt="Search Studio Light" /> | <img src="./assets/preview-fleet-manager.png" width="100%" alt="Fleet Manager" /> |
+
+| Autonomous Account Spawner | Deep Research (High-Contrast Dark Mode) |
+|:---:|:---:|
+| <img src="./assets/preview-spawner-modal.png" width="100%" alt="Account Spawner Modal" /> | <img src="./assets/preview-dark-mode.png" width="100%" alt="Dark Mode Studio" /> |
+
+</details>
+
+---
+
 ## Key Features
 
 - **Multi-Account Fleet Orchestration:**
