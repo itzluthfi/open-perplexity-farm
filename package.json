@@ -1,0 +1,33 @@
+{
+  "name": "open-perplexity-farm",
+  "version": "1.0.0",
+  "description": "Open Perplexity Farm & Web Studio - Multi-Account Fleet, CDP Stealth Engine, and OpenAI-Compatible REST Gateway",
+  "type": "module",
+  "main": "server.mjs",
+  "bin": {
+    "perplexity-api": "./bin/cli.mjs",
+    "pplx": "./bin/cli.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "serve": "node server.mjs",
+    "tui": "node run.js",
+    "pool": "node bin/cli.mjs pool",
+    "create": "node bin/cli.mjs create",
+    "rotate": "node bin/cli.mjs rotate",
+    "test": "node bin/cli.mjs test"
+  },
+  "keywords": [
+    "perplexity",
+    "perplexity-clone",
+    "open-source-search",
+    "openai-compatible",
+    "academic-search",
+    "cdp-stealth",
+    "account-farm",
+    "rate-limit-fallback"
+  ],
+  "author": "Antigravity Open Source",
+  "license": "MIT"
+}

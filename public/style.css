@@ -1,0 +1,115 @@
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2d2d;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f4444;
+}
+
+/* Prose Typography Customization for Dark Mode */
+.prose {
+  color: #d1d5db;
+}
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+.prose p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  line-height: 1.7;
+}
+.prose a {
+  color: #14b8a6;
+  text-decoration: none;
+  font-weight: 500;
+}
+.prose a:hover {
+  text-decoration: underline;
+}
+.prose code {
+  color: #2dd4bf;
+  background-color: #202222;
+  padding: 0.2em 0.4em;
+  border-radius: 0.375rem;
+  font-size: 0.875em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+.prose pre {
+  background-color: #161717;
+  border: 1px solid #2e3232;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+.prose pre code {
+  color: #e5e7eb;
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+}
+.prose ul, .prose ol {
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+.prose blockquote {
+  border-left: 3px solid #14b8a6;
+  padding-left: 1rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+.prose th, .prose td {
+  border: 1px solid #2e3232;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.prose th {
+  background-color: #202222;
+  color: #ffffff;
+}
+
+/* Pulsing Dots */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Source Card Hover Effects */
+.source-card {
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+.source-card:hover {
+  transform: translateY(-2px);
+  border-color: #0d9488;
+  background-color: #252828;
+}

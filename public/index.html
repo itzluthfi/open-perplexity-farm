@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open Perplexity Farm & Web Studio</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314b8a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><polygon points='16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76'/></svg>">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+            },
+            surface: {
+              DEFAULT: '#191A1A',
+              card: '#202222',
+              border: '#2E3232',
+              hover: '#2A2D2D'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Marked.js for Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- KaTeX for Math Equations -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="bg-[#131414] text-[#E8EAEA] min-h-screen flex antialiased select-none font-sans">
+
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobileBackdrop" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+  <!-- Left Sidebar (Inspired by Perplexity Web UI) -->
+  <aside id="sidebar" class="w-64 bg-[#191A1A] border-r border-surface-border flex flex-col justify-between shrink-0 z-40 fixed md:static inset-y-0 left-0 transition-transform -translate-x-full md:translate-x-0">
+    <div class="flex flex-col p-4 gap-4 overflow-y-auto">
+      <!-- Logo & Brand Header -->
+      <div class="flex items-center justify-between px-2 pt-1 pb-2">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-semibold tracking-wide text-white">Open Perplexity</h1>
+            <p class="text-[11px] text-zinc-400">Farm & Web Studio</p>
+          </div>
+        </div>
+        <button id="sidebarCloseBtn" class="md:hidden text-zinc-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- New Chat Button -->
+      <button id="newChatBtn" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 border border-zinc-700/60 text-zinc-200 transition text-sm font-medium shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          <span>Baru</span>
+        </div>
+        <span class="text-[10px] text-zinc-400 font-mono px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700">Ctrl K</span>
+      </button>
+
+      <!-- Primary Navigation -->
+      <nav class="space-y-1 text-sm font-medium">
+        <button id="navSearchBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-zinc-800/50 text-white transition">
+          <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <span>Pencarian</span>
+        </button>
+        <button id="navAcademicBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
+          <span>Fokus Akademik</span>
+        </button>
+        <button id="navFarmBtn" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30 transition">
+          <div class="flex items-center gap-3">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            <span>Armada Akun (Farm)</span>
+          </div>
+          <span id="activePoolBadge" class="text-[10px] bg-teal-500/10 text-teal-400 px-1.5 py-0.5 rounded border border-teal-500/30 font-mono">0 Akun</span>
+        </button>
+      </nav>
+
+      <!-- Recent Sessions List -->
+      <div class="pt-3 border-t border-surface-border">
+        <div class="flex items-center justify-between px-2 mb-2">
+          <span class="text-[11px] font-semibold tracking-wider text-zinc-400 uppercase">Sesi Terbaru</span>
+          <button id="clearHistoryBtn" class="text-[10px] text-zinc-400 hover:text-red-400 transition" title="Bersihkan riwayat">Hapus</button>
+        </div>
+        <div id="sessionHistoryList" class="space-y-1 text-xs text-zinc-400 max-h-48 overflow-y-auto pr-1">
+          <!-- Populated via JavaScript -->
+          <div class="px-2 py-3 text-center text-zinc-400 italic">Belum ada sesi pencarian</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Profile & Account Status Bottom -->
+    <div class="p-3 border-t border-surface-border bg-[#161717]">
+      <div class="flex items-center justify-between p-2 rounded-lg bg-zinc-800/40 border border-zinc-700/40">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-black font-bold text-xs shrink-0">
+            OP
+          </div>
+          <div class="truncate">
+            <p id="bottomAccountEmail" class="text-xs font-medium text-zinc-200 truncate">Loading pool...</p>
+            <p id="bottomAccountStatus" class="text-[10px] text-teal-400 flex items-center gap-1 font-mono">
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+              <span>Active</span>
+            </p>
+          </div>
+        </div>
+        <button id="quickRotateBtn" title="Rotasi Akun Cepat" class="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-zinc-700/50 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main View Area -->
+  <main class="flex-1 flex flex-col min-w-0 bg-[#131414] overflow-hidden relative">
+
+    <!-- Top Bar -->
+    <header class="h-14 border-b border-surface-border flex items-center justify-between px-4 sm:px-6 shrink-0 bg-[#131414]/80 backdrop-blur z-20">
+      <div class="flex items-center gap-3">
+        <button id="mobileMenuBtn" class="md:hidden text-zinc-400 hover:text-white p-1.5 rounded-lg border border-surface-border">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300">Open-Source Engine</span>
+          <span id="headerCdpStatus" class="text-xs text-teal-400 flex items-center gap-1 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-teal-400"></span> CDP Connected
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="https://github.com" target="_blank" class="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 transition">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path></svg>
+          <span class="hidden sm:inline">GitHub</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Content View: SEARCH STUDIO -->
+    <section id="viewStudio" class="flex-1 flex flex-col overflow-y-auto">
+      <div class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col justify-between">
+        
+        <!-- Hero Section (Shown when no conversation is active) -->
+        <div id="heroContainer" class="my-auto text-center py-10">
+          <p class="text-xs uppercase tracking-widest text-zinc-400 font-semibold mb-2">Mesin Pencarian & Riset</p>
+          <h2 class="text-3xl sm:text-4xl font-semibold text-white tracking-tight mb-8">Pencarian & Sintesis Sumber</h2>
+
+          <!-- Main Search Box (Perplexity Style) -->
+          <div class="w-full max-w-2xl mx-auto bg-surface rounded-2xl border border-surface-border shadow-2xl p-3 focus-within:border-teal-500/50 transition">
+            <textarea id="promptInput" rows="3" placeholder="Ketik topik riset, analisis, atau kata kunci..." class="w-full bg-transparent resize-none outline-none text-zinc-100 placeholder-zinc-400 text-sm sm:text-base leading-relaxed p-2"></textarea>
+            
+            <div class="flex items-center justify-between pt-2 border-t border-surface-border/50">
+              <!-- Left Toolbar (Focus & Model Selectors) -->
+              <div class="flex items-center gap-2">
+                <!-- Focus Selector -->
+                <div class="relative">
+                  <select id="focusSelector" class="bg-zinc-800 text-zinc-300 text-xs font-medium rounded-lg px-2.5 py-1.5 border border-zinc-700 outline-none cursor-pointer hover:bg-zinc-700 transition">
+                    <option value="web">Cari Web</option>
+                    <option value="academic">Fokus Akademik</option>
+                    <option value="writing">Mode Menulis</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="reddit">Komunitas Reddit</option>
+                  </select>
+                </div>
+
+                <!-- Model Selector -->
+                <div class="relative hidden sm:block">
+                  <select id="modelSelector" class="bg-zinc-800 text-zinc-300 text-xs font-medium rounded-lg px-2.5 py-1.5 border border-zinc-700 outline-none cursor-pointer hover:bg-zinc-700 transition">
+                    <option value="perplexity/sonar-web">Model: Sonar Web</option>
+                    <option value="perplexity/sonar-reasoning">Model: Deep Reasoning</option>
+                    <option value="perplexity/pro-search">Model: Pro Search</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Right Toolbar (Submit Button) -->
+              <div class="flex items-center gap-2">
+                <button id="submitBtn" class="bg-teal-500 hover:bg-teal-400 text-black font-semibold p-2 rounded-xl transition flex items-center justify-center shadow-lg shadow-teal-500/20 disabled:opacity-50">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Suggestion Chips -->
+          <div class="flex flex-wrap items-center justify-center gap-2 mt-6 max-w-2xl mx-auto">
+            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/60 text-xs text-zinc-300 transition">
+              Jurnal multi-vendor monitoring 2024-2026
+            </button>
+            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/60 text-xs text-zinc-300 transition">
+              Metodologi Personal Extreme Programming (PXP)
+            </button>
+            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/60 text-xs text-zinc-300 transition">
+              Evaluasi mutu ISO/IEC 25010 & skor SUS
+            </button>
+          </div>
+        </div>
+
+        <!-- Conversation & Result Container (Shown when query is submitted) -->
+        <div id="conversationContainer" class="hidden flex-col gap-6 pb-20">
+          
+          <!-- User Query Header -->
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 font-bold text-xs shrink-0 mt-0.5">
+              U
+            </div>
+            <div>
+              <p class="text-xs text-zinc-400 font-mono mb-1">Pertanyaan Anda</p>
+              <h3 id="displayQueryText" class="text-xl sm:text-2xl font-semibold text-white tracking-tight"></h3>
+            </div>
+          </div>
+
+          <!-- Interactive Sources Card Grid -->
+          <div id="sourcesSection" class="pt-2">
+            <div class="flex items-center gap-2 text-xs font-semibold text-zinc-400 mb-3">
+              <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+              <span>Sumber Terverifikasi (<span id="sourceCount">0</span>)</span>
+            </div>
+            <div id="sourcesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              <!-- Populated via JavaScript -->
+            </div>
+          </div>
+
+          <!-- AI Response Output Body -->
+          <div class="p-6 rounded-2xl bg-surface border border-surface-border shadow-xl">
+            <div class="flex items-center justify-between pb-3 mb-4 border-b border-surface-border">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+                <span id="responseStatusLabel" class="text-xs font-mono text-zinc-400">Menghasilkan sintesis...</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button id="copyAnswerBtn" class="px-2.5 py-1 text-xs rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                  <span>Salin</span>
+                </button>
+                <button id="exportApaBtn" class="px-2.5 py-1 text-xs rounded-lg bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/30 transition flex items-center gap-1.5 font-medium">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                  <span>Ekspor APA 6th</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Markdown Output Target -->
+            <div id="responseMarkdown" class="prose prose-invert max-w-none text-zinc-200 leading-relaxed text-sm sm:text-base">
+              <!-- Stream content injected here -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Follow-up Floating Input Bar (Shown when conversation is active) -->
+      <div id="followupBar" class="hidden fixed bottom-0 left-0 md:left-64 right-0 p-4 bg-gradient-to-t from-[#131414] via-[#131414]/90 to-transparent">
+        <div class="max-w-3xl mx-auto bg-surface rounded-2xl border border-surface-border shadow-2xl p-2.5 flex items-center gap-2">
+          <input id="followupInput" type="text" placeholder="Ajukan pertanyaan lanjutan..." class="flex-1 bg-transparent outline-none text-sm text-zinc-100 placeholder-zinc-400 px-3">
+          <button id="followupSubmitBtn" class="bg-teal-500 hover:bg-teal-400 text-black font-semibold p-2 rounded-xl transition shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content View: ACCOUNT FARM DASHBOARD -->
+    <section id="viewFarm" class="hidden flex-1 overflow-y-auto p-4 sm:p-6">
+      <div class="max-w-5xl mx-auto space-y-6">
+        
+        <!-- Dashboard Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border">
+          <div>
+            <h2 class="text-2xl font-bold text-white tracking-tight">Armada Akun Perplexity</h2>
+            <p class="text-sm text-zinc-400">Manajemen multi-akun, rotasi otomatis, dan penyeimbangan beban kueri.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="farmRotateBtn" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium border border-zinc-700 transition flex items-center gap-2">
+              <svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              <span>Rotasi Akun</span>
+            </button>
+            <button id="farmSpawnBtn" class="px-3.5 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-black text-xs font-semibold shadow-lg shadow-teal-500/20 transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              <span>Buat Akun Otomatis</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div class="p-4 rounded-xl bg-surface border border-surface-border">
+            <p class="text-xs text-zinc-400 mb-1">Total Akun</p>
+            <p id="farmStatTotal" class="text-2xl font-bold text-white">0</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface border border-surface-border">
+            <p class="text-xs text-zinc-400 mb-1">Akun Aktif</p>
+            <p id="farmStatActive" class="text-2xl font-bold text-teal-400">0</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface border border-surface-border">
+            <p class="text-xs text-zinc-400 mb-1">Cooldown (429)</p>
+            <p id="farmStatCooldown" class="text-2xl font-bold text-amber-400">0</p>
+          </div>
+          <div class="p-4 rounded-xl bg-surface border border-surface-border">
+            <p class="text-xs text-zinc-400 mb-1">Total Kueri</p>
+            <p id="farmStatUsage" class="text-2xl font-bold text-white">0</p>
+          </div>
+        </div>
+
+        <!-- Strategy Selector Card -->
+        <div class="p-4 rounded-xl bg-surface border border-surface-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h4 class="text-sm font-semibold text-white">Strategi Rotasi Beban</h4>
+            <p class="text-xs text-zinc-400">Algoritma pemilihan akun untuk setiap permintaan kueri.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <select id="farmStrategySelect" class="bg-zinc-800 text-zinc-200 text-xs rounded-lg px-3 py-2 border border-zinc-700 outline-none">
+              <option value="FAILOVER_ONLY">Failover Only (Pindah saat Limit)</option>
+              <option value="ROUND_ROBIN">Round-Robin (Bagi Rata per Kueri)</option>
+              <option value="LEAST_USED">Least-Used (Beban Terendah)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Account Fleet Table -->
+        <div class="rounded-xl bg-surface border border-surface-border overflow-hidden">
+          <div class="p-4 border-b border-surface-border flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white">Daftar Akun Terdaftar</h3>
+            <span class="text-xs text-zinc-400">Diperbarui berkala</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-zinc-800/50 text-zinc-400 border-b border-surface-border font-medium">
+                <tr>
+                  <th class="p-3 w-12 text-center">No</th>
+                  <th class="p-3">Identitas Akun / Email</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3">Total Kueri</th>
+                  <th class="p-3">Terakhir Digunakan</th>
+                  <th class="p-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="farmAccountTableBody" class="divide-y divide-surface-border text-zinc-300">
+                <!-- Populated via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal Export Sitasi APA 6th -->
+  <div id="apaModal" class="fixed inset-0 bg-black/75 z-50 hidden items-center justify-center p-4">
+    <div class="w-full max-w-2xl bg-surface rounded-2xl border border-surface-border shadow-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-surface-border pb-3">
+        <div>
+          <h3 class="text-lg font-semibold text-white">Daftar Pustaka APA 6th Edition</h3>
+          <p class="text-xs text-zinc-400">Format sitasi standar APA 6th Edition untuk karya ilmiah dan jurnal.</p>
+        </div>
+        <button id="closeApaModalBtn" class="text-zinc-400 hover:text-white p-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="relative">
+        <textarea id="apaOutputTextarea" rows="8" readonly class="w-full bg-[#131414] border border-surface-border rounded-xl p-3 text-xs sm:text-sm font-mono text-zinc-200 outline-none leading-relaxed select-all"></textarea>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <span class="text-xs text-zinc-400">Format siap pakai untuk naskah ilmiah.</span>
+        <button id="copyApaModalBtn" class="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-semibold text-xs transition flex items-center gap-1.5 shadow-md shadow-teal-500/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+          <span>Salin Sitasi</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

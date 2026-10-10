@@ -1,0 +1,7 @@
+{
+  "_meta": {
+    "activeIndex": 0,
+    "strategy": "FAILOVER_ONLY"
+  },
+  "accounts": {}
+}

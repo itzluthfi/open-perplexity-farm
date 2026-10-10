@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment configuration
+.env
+
+# Chrome DevTools user data and temporary sessions
+.cdp_profile/
+*.log
+
+# Sensitive Account Pool Data & Session Cookies
+accounts/*.json
+!accounts/pool_registry.json.example
+
+# Local scratch and archive
+tools/archive/
+
+# OS generated files
+.DS_Store
+Thumbs.db
