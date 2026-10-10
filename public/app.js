@@ -86,6 +86,10 @@ function setupEventListeners() {
   el.navSearchBtn?.addEventListener('click', () => switchView('studio'));
   el.navAcademicBtn?.addEventListener('click', () => {
     switchView('studio');
+    el.navSearchBtn.classList.remove('bg-zinc-800/50', 'text-white');
+    el.navSearchBtn.classList.add('text-zinc-400');
+    el.navAcademicBtn.classList.add('bg-zinc-800/50', 'text-white');
+    el.navAcademicBtn.classList.remove('text-zinc-400');
     el.focusSelector.value = 'academic';
     el.promptInput.focus();
   });
@@ -172,6 +176,8 @@ function switchView(viewName) {
     el.navSearchBtn.classList.remove('text-zinc-400');
     el.navFarmBtn.classList.remove('bg-zinc-800/50', 'text-white');
     el.navFarmBtn.classList.add('text-zinc-400');
+    el.navAcademicBtn.classList.remove('bg-zinc-800/50', 'text-white');
+    el.navAcademicBtn.classList.add('text-zinc-400');
   } else {
     el.viewStudio.classList.add('hidden');
     el.viewFarm.classList.remove('hidden');
@@ -179,6 +185,8 @@ function switchView(viewName) {
     el.navFarmBtn.classList.remove('text-zinc-400');
     el.navSearchBtn.classList.remove('bg-zinc-800/50', 'text-white');
     el.navSearchBtn.classList.add('text-zinc-400');
+    el.navAcademicBtn.classList.remove('bg-zinc-800/50', 'text-white');
+    el.navAcademicBtn.classList.add('text-zinc-400');
     fetchAccountsAndStats();
   }
 }
