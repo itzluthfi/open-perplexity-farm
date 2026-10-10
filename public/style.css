@@ -290,18 +290,54 @@
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Source Card Hover Effects */
-.source-card {
+/* Source Card & Journal Card Hover Effects */
+.source-card, .journal-card {
   transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
-.source-card:hover {
+.source-card:hover, .journal-card:hover {
   transform: translateY(-2px);
   border-color: #0d9488;
   background-color: #f8fafc;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
-.dark .source-card:hover {
+.dark .source-card:hover, .dark .journal-card:hover {
   border-color: #14b8a6;
-  background-color: #252828;
+  background-color: #202222;
   box-shadow: none;
+}
+
+/* Academic Topic Cards */
+.topic-card {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.topic-card:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+  box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.04);
+}
+.dark .topic-card:hover {
+  border-color: rgba(20, 184, 166, 0.4);
+}
+
+/* Chat Bubbles */
+.chat-user-bubble {
+  border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+}
+.chat-assistant-card {
+  border-radius: 1.25rem;
+}
+
+/* Utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

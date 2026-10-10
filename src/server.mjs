@@ -388,7 +388,8 @@ export async function createServer(options = {}) {
                 index: 0,
                 message: {
                   role: "assistant",
-                  content: answerText
+                  content: answerText,
+                  sources
                 },
                 finish_reason: "stop"
               }

@@ -27,24 +27,22 @@ export class CdpSession {
     this.ws = null;
     this.msgId = 0;
     this.eventListeners = new Map();
+    this.pendingRequests = new Map();
+    this.currentTargetId = null;
   }
 
-  async send(method, params = {}) {
+  async send(method, params = {}, timeoutMs = 25000) {
     if (!this.ws || this.ws.readyState !== 1) {
       throw new Error("CDP WebSocket is not connected");
     }
     const id = ++this.msgId;
     return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`Timeout CDP call: ${method} (${timeoutMs}ms)`));
+      }, timeoutMs);
+      this.pendingRequests.set(id, { resolve, reject, timer });
       this.ws.send(JSON.stringify({ id, method, params }));
-      const handler = (ev) => {
-        const msg = JSON.parse(ev.data);
-        if (msg.id === id) {
-          this.ws.removeEventListener("message", handler);
-          if (msg.error) reject(new Error(msg.error.message || JSON.stringify(msg.error)));
-          else resolve(msg.result);
-        }
-      };
-      this.ws.addEventListener("message", handler);
     });
   }
 
@@ -81,6 +79,8 @@ export class CdpSession {
   async ensureConnected() {
     if (!this.ws || this.ws.readyState !== 1) {
       await this.connect();
+    } else {
+      await this.ensureActivePage();
     }
   }
 
@@ -109,6 +109,60 @@ export class CdpSession {
       returnByValue: true,
     });
     return res?.result?.value;
+  }
+
+  async attachToTarget(pageTarget) {
+    if (this.ws) {
+      try { this.ws.close(); } catch {}
+      this.ws = null;
+    }
+    this.currentTargetId = pageTarget.id;
+    this.ws = new WebSocket(pageTarget.webSocketDebuggerUrl);
+
+    await new Promise((resolve, reject) => {
+      this.ws.onopen = resolve;
+      this.ws.onerror = reject;
+    });
+
+    this.ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.id !== undefined && this.pendingRequests.has(msg.id)) {
+          const { resolve, reject, timer } = this.pendingRequests.get(msg.id);
+          this.pendingRequests.delete(msg.id);
+          clearTimeout(timer);
+          if (msg.error) reject(new Error(msg.error.message || JSON.stringify(msg.error)));
+          else resolve(msg.result);
+          return;
+        }
+        if (msg.method && this.eventListeners.has(msg.method)) {
+          for (const cb of this.eventListeners.get(msg.method)) cb(msg.params);
+        }
+      } catch {}
+    };
+
+    await this.send("Page.enable");
+    await this.send("Runtime.enable");
+    await this.send("Network.enable");
+
+    // Mask CDP webdriver fingerprint
+    await this.evaluate(`
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    `);
+  }
+
+  async ensureActivePage() {
+    try {
+      const res = await fetch(`http://127.0.0.1:${this.cdpPort}/json`);
+      const targets = await res.json();
+      const pageTarget = targets.find(t => t.type === "page" && t.url.includes("perplexity")) || targets.find(t => t.type === "page");
+      if (pageTarget && this.currentTargetId !== pageTarget.id) {
+        console.log(`[CDP] Berpindah ke target tab: ${pageTarget.title || pageTarget.url}`);
+        await this.attachToTarget(pageTarget);
+      }
+    } catch (e) {
+      console.warn("[CDP] Gagal check active page:", e.message);
+    }
   }
 
   async connect(launchIfClosed = true) {
@@ -141,30 +195,7 @@ export class CdpSession {
       throw new Error("Target Perplexity page not found in Chrome");
     }
 
-    this.ws = new WebSocket(pageTarget.webSocketDebuggerUrl);
-    await new Promise((resolve, reject) => {
-      this.ws.onopen = resolve;
-      this.ws.onerror = reject;
-    });
-
-    this.ws.addEventListener("message", (ev) => {
-      try {
-        const msg = JSON.parse(ev.data);
-        if (msg.method && this.eventListeners.has(msg.method)) {
-          for (const cb of this.eventListeners.get(msg.method)) cb(msg.params);
-        }
-      } catch {}
-    });
-
-    await this.send("Page.enable");
-    await this.send("Runtime.enable");
-    await this.send("Network.enable");
-
-    // Mask CDP webdriver fingerprint
-    await this.evaluate(`
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    `);
-
+    await this.attachToTarget(pageTarget);
     return true;
   }
 
@@ -242,6 +273,9 @@ export class CdpSession {
   async query(prompt, options = {}) {
     const timeoutMs = options.timeoutMs || CONFIG.MAX_QUERY_TIMEOUT_MS;
     const focus = options.focus || "web";
+
+    // 0. Pastikan terhubung ke active tab
+    await this.ensureActivePage();
 
     // 1. Pastikan di home perplexity
     const currentUrl = await this.evaluate("window.location.href");
@@ -347,7 +381,7 @@ export class CdpSession {
             sources: sources.slice(0, 15)
           };
         })()
-      `);
+      `).catch(() => null);
 
       if (status?.isLimit) {
         throw new Error("RATE_LIMIT_EXCEEDED: Akun mencapai limit harian/kuota Pro.");
@@ -360,9 +394,9 @@ export class CdpSession {
         } else {
           if (!status.isGenerating) {
             stableCount++;
-            if ((status.hasFinishedButtons && stableCount >= 2) || stableCount >= 4) {
+            if ((status.hasFinishedButtons && stableCount >= 1) || stableCount >= 3) {
               if (status.latestText.length > 40) {
-                // Gabungkan sources dari DOM dengan yang diekstrak dari markdown
+                console.log(`[CDP] Selesai membaca respon (${status.latestText.length} karakter, ${status.sources?.length || 0} sumber).`);
                 const mdSources = extractCitationsFromMarkdown(status.latestText);
                 const combinedSources = dedupeSources([...(status.sources || []), ...mdSources]);
                 return {
@@ -377,6 +411,7 @@ export class CdpSession {
     }
 
     if (lastText && lastText.length > 40) {
+      console.log(`[CDP] Timeout tercapai, mengembalikan teks parsial (${lastText.length} karakter).`);
       const mdSources = extractCitationsFromMarkdown(lastText);
       return {
         text: formatPerplexityOutput(lastText),

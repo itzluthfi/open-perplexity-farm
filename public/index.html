@@ -55,26 +55,28 @@
 
   <link rel="stylesheet" href="/style.css">
 </head>
-<body class="bg-slate-100 text-slate-800 dark:bg-[#131414] dark:text-[#E8EAEA] min-h-screen flex antialiased select-none font-sans transition-colors duration-150">
+<body class="bg-slate-100 text-slate-800 dark:bg-[#131414] dark:text-[#E8EAEA] h-screen h-[100dvh] overflow-hidden flex flex-col md:flex-row antialiased select-none font-sans transition-colors duration-150">
 
   <!-- Mobile Menu Backdrop -->
-  <div id="mobileBackdrop" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+  <div id="mobileBackdrop" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
 
-  <!-- Left Sidebar -->
-  <aside id="sidebar" class="w-64 bg-white border-r border-slate-200 dark:bg-[#191A1A] dark:border-surface-border flex flex-col justify-between shrink-0 z-40 fixed md:static inset-y-0 left-0 transition-transform -translate-x-full md:translate-x-0 shadow-sm md:shadow-none">
-    <div class="flex flex-col p-4 gap-4 overflow-y-auto">
+  <!-- Left Sidebar (Solid, Fixed Layout - Never Scrolls with Content) -->
+  <aside id="sidebar" class="w-64 h-full bg-white dark:bg-[#191A1A] border-r border-slate-200 dark:border-surface-border flex flex-col shrink-0 z-40 fixed md:relative inset-y-0 left-0 transition-transform duration-200 shadow-sm md:shadow-none overflow-hidden -translate-x-full md:translate-x-0">
+    
+    <!-- Top Header (Fixed/Solid) -->
+    <div class="shrink-0 p-4 pb-2 space-y-3">
       <!-- Logo & Brand Header -->
-      <div class="flex items-center justify-between px-2 pt-1 pb-2">
+      <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
+          <div class="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 dark:bg-teal-500/10 dark:border-teal-500/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
           </div>
           <div>
-            <h1 class="text-sm font-semibold tracking-wide text-slate-900 dark:text-white">Open Perplexity</h1>
-            <p class="text-[11px] text-slate-500 dark:text-zinc-400">Farm & Web Studio</p>
+            <h1 class="text-sm font-bold tracking-wide text-slate-900 dark:text-white">Open Perplexity</h1>
+            <p class="text-[11px] text-slate-500 dark:text-zinc-400 font-medium">Farm & Web Studio</p>
           </div>
         </div>
-        <button id="sidebarCloseBtn" class="md:hidden text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white p-1">
+        <button id="sidebarCloseBtn" class="md:hidden text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
@@ -83,7 +85,7 @@
       <button id="newChatBtn" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 dark:bg-zinc-800/80 dark:hover:bg-zinc-700/80 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-200 transition text-sm font-medium shadow-sm">
         <div class="flex items-center gap-2.5">
           <svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          <span>Baru</span>
+          <span>Pencarian Baru</span>
         </div>
         <span class="text-[10px] text-slate-500 dark:text-zinc-400 font-mono px-1.5 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700">Ctrl K</span>
       </button>
@@ -92,7 +94,7 @@
       <nav class="space-y-1 text-sm font-medium">
         <button id="navSearchBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-teal-50 text-teal-800 border border-teal-200/80 dark:bg-zinc-800/50 dark:text-white dark:border-transparent transition">
           <svg class="w-4 h-4 text-teal-600 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          <span>Pencarian</span>
+          <span>Pencarian Riset</span>
         </button>
         <button id="navAcademicBtn" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800/30 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
@@ -101,59 +103,59 @@
         <button id="navFarmBtn" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800/30 transition text-sm font-medium">
           <div class="flex items-center gap-3 min-w-0">
             <svg class="w-4 h-4 shrink-0 text-slate-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            <span class="truncate">Kelola Akun</span>
+            <span class="truncate">Kelola Armada</span>
           </div>
-          <span id="activePoolBadge" class="shrink-0 text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 whitespace-nowrap">0 Aktif</span>
+          <span id="activePoolBadge" class="shrink-0 text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-500/10 dark:text-teal-400 dark:border-teal-500/20 whitespace-nowrap">7 Aktif</span>
         </button>
       </nav>
+    </div>
 
-      <!-- Recent Sessions List -->
-      <div class="pt-3 border-t border-slate-200 dark:border-surface-border">
-        <div class="flex items-center justify-between px-2 mb-2">
-          <span class="text-[11px] font-semibold tracking-wider text-slate-500 dark:text-zinc-400 uppercase">Sesi Terbaru</span>
-          <button id="clearHistoryBtn" class="text-[10px] text-slate-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition" title="Bersihkan riwayat">Hapus</button>
-        </div>
-        <div id="sessionHistoryList" class="space-y-1 text-xs text-slate-600 dark:text-zinc-400 max-h-48 overflow-y-auto pr-1">
-          <!-- Populated via JavaScript -->
-          <div class="px-2 py-3 text-center text-slate-400 dark:text-zinc-500 italic">Belum ada sesi pencarian</div>
-        </div>
+    <!-- Middle Scrollable History (Only this part scrolls inside sidebar) -->
+    <div class="flex-1 overflow-y-auto px-4 py-2 min-h-0 space-y-2 border-t border-slate-200 dark:border-surface-border">
+      <div class="flex items-center justify-between px-1 pt-1">
+        <span class="text-[11px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase">Riwayat Sesi</span>
+        <button id="clearHistoryBtn" class="text-[10px] text-slate-400 dark:text-zinc-500 hover:text-red-600 dark:hover:text-red-400 transition" title="Bersihkan riwayat">Hapus</button>
+      </div>
+      <div id="sessionHistoryList" class="space-y-1 text-xs text-slate-600 dark:text-zinc-400 pr-1">
+        <!-- Populated via JavaScript -->
+        <div class="px-2 py-3 text-center text-slate-400 dark:text-zinc-500 italic">Belum ada sesi pencarian</div>
       </div>
     </div>
 
-    <!-- User Profile & Account Status Bottom -->
-    <div class="p-3 border-t border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#161717]">
+    <!-- Bottom Account Status (Fixed/Solid at Bottom) -->
+    <div class="shrink-0 p-3 border-t border-slate-200 dark:border-surface-border bg-slate-50 dark:bg-[#161717]">
       <div class="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/40 shadow-sm">
         <div class="flex items-center gap-2.5 overflow-hidden">
           <div class="w-7 h-7 rounded-full bg-teal-600 dark:bg-gradient-to-tr dark:from-teal-500 dark:to-emerald-400 flex items-center justify-center text-white dark:text-black font-bold text-xs shrink-0">
             OP
           </div>
           <div class="truncate">
-            <p id="bottomAccountEmail" class="text-xs font-medium text-slate-800 dark:text-zinc-200 truncate">Loading pool...</p>
-            <p id="bottomAccountStatus" class="text-[10px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-mono">
+            <p id="bottomAccountEmail" class="text-xs font-semibold text-slate-800 dark:text-zinc-200 truncate">Loading pool...</p>
+            <p id="bottomAccountStatus" class="text-[10px] text-teal-600 dark:text-teal-400 flex items-center gap-1 font-mono font-medium">
               <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
-              <span>Active</span>
+              <span>Armada Aktif</span>
             </p>
           </div>
         </div>
-        <button id="quickRotateBtn" title="Rotasi Akun Cepat" class="p-1.5 rounded text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition">
+        <button id="quickRotateBtn" title="Rotasi Akun Cepat" class="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-700/50 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
         </button>
       </div>
     </div>
   </aside>
 
-  <!-- Main View Area -->
-  <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-[#131414] overflow-hidden relative">
+  <!-- Main View Area (Only this content container scrolls) -->
+  <main class="flex-1 h-full flex flex-col min-w-0 bg-slate-50 dark:bg-[#131414] overflow-hidden relative">
 
-    <!-- Top Bar -->
-    <header class="h-14 border-b border-slate-200 dark:border-surface-border flex items-center justify-between px-4 sm:px-6 shrink-0 bg-white/90 dark:bg-[#131414]/80 backdrop-blur z-20">
+    <!-- Top Bar Header -->
+    <header class="h-14 border-b border-slate-200 dark:border-surface-border flex items-center justify-between px-3 sm:px-6 shrink-0 bg-white/90 dark:bg-[#131414]/80 backdrop-blur z-20">
       <div class="flex items-center gap-3">
         <button id="mobileMenuBtn" class="md:hidden text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-lg border border-slate-200 dark:border-surface-border">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
         <div class="flex items-center gap-2">
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300">Open-Source Engine</span>
-          <span id="headerCdpStatus" class="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-mono">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300">Open Perplexity Studio</span>
+          <span id="headerCdpStatus" class="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1 font-mono font-medium">
             <span class="w-1.5 h-1.5 rounded-full bg-teal-500"></span> CDP Connected
           </span>
         </div>
@@ -161,11 +163,9 @@
       <div class="flex items-center gap-2 sm:gap-3">
         <!-- Theme Toggle Button (Light Default / Dark Switch) -->
         <button id="themeToggleBtn" type="button" class="p-2 rounded-xl border border-slate-200 dark:border-surface-border bg-slate-100 hover:bg-slate-200/80 dark:bg-zinc-800/80 dark:hover:bg-zinc-700/80 text-slate-700 dark:text-zinc-200 transition flex items-center gap-1.5 text-xs font-medium" title="Ganti Mode Tampilan (Terang / Gelap)">
-          <!-- Moon Icon (Shown in Light Mode) -->
           <svg id="themeIconMoon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
           </svg>
-          <!-- Sun Icon (Shown in Dark Mode) -->
           <svg id="themeIconSun" class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="5" stroke-width="2"></circle>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
@@ -180,14 +180,14 @@
       </div>
     </header>
 
-    <!-- Content View: SEARCH STUDIO -->
-    <section id="viewStudio" class="flex-1 flex flex-col overflow-y-auto">
-      <div class="max-w-4xl w-full mx-auto p-4 sm:p-6 flex-1 flex flex-col justify-between">
+    <!-- Content View: SEARCH STUDIO (Scrollable Content Area) -->
+    <section id="viewStudio" class="flex-1 h-full overflow-y-auto min-h-0 relative">
+      <div class="max-w-4xl w-full mx-auto p-3 sm:p-6 min-h-full flex flex-col justify-between">
         
         <!-- Hero Section (Shown when no conversation is active) -->
-        <div id="heroContainer" class="my-auto text-center py-10">
-          <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-400 font-semibold mb-2">Mesin Pencarian & Riset</p>
-          <h2 class="text-3xl sm:text-4xl font-semibold text-slate-900 dark:text-white tracking-tight mb-8">Pencarian & Sintesis Sumber</h2>
+        <div id="heroContainer" class="my-auto text-center py-8 sm:py-12">
+          <p class="text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-400 font-bold mb-2">Mesin Pencarian Ilmiah & Sintesis Literatur</p>
+          <h2 class="text-2xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-8">Pencarian & Sintesis Sumber Akademik</h2>
 
           <!-- Main Search Box (Perplexity Style) -->
           <div class="w-full max-w-2xl mx-auto bg-white dark:bg-surface rounded-2xl border border-slate-200 dark:border-surface-border shadow-xl dark:shadow-2xl p-3 focus-within:border-teal-500/50 transition">
@@ -196,20 +196,18 @@
             <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-surface-border/50">
               <!-- Left Toolbar (Focus & Model Selectors) -->
               <div class="flex items-center gap-2">
-                <!-- Focus Selector -->
                 <div class="relative">
-                  <select id="focusSelector" class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-medium rounded-lg px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 outline-none cursor-pointer hover:bg-slate-200 dark:hover:bg-zinc-700 transition">
-                    <option value="web">Cari Web</option>
+                  <select id="focusSelector" class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 outline-none cursor-pointer hover:bg-slate-200 dark:hover:bg-zinc-700 transition">
                     <option value="academic">Fokus Akademik</option>
+                    <option value="web">Cari Web</option>
                     <option value="writing">Mode Menulis</option>
                     <option value="youtube">YouTube</option>
                     <option value="reddit">Komunitas Reddit</option>
                   </select>
                 </div>
 
-                <!-- Model Selector -->
                 <div class="relative hidden sm:block">
-                  <select id="modelSelector" class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-medium rounded-lg px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 outline-none cursor-pointer hover:bg-slate-200 dark:hover:bg-zinc-700 transition">
+                  <select id="modelSelector" class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-lg px-2.5 py-1.5 border border-slate-300 dark:border-zinc-700 outline-none cursor-pointer hover:bg-slate-200 dark:hover:bg-zinc-700 transition">
                     <option value="perplexity/sonar-web">Model: Sonar Web</option>
                     <option value="perplexity/sonar-reasoning">Model: Deep Reasoning</option>
                     <option value="perplexity/pro-search">Model: Pro Search</option>
@@ -219,7 +217,7 @@
 
               <!-- Right Toolbar (Submit Button) -->
               <div class="flex items-center gap-2">
-                <button id="submitBtn" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold p-2 rounded-xl transition flex items-center justify-center shadow-lg shadow-teal-600/20 disabled:opacity-50">
+                <button id="submitBtn" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold p-2.5 rounded-xl transition flex items-center justify-center shadow-lg shadow-teal-600/20 disabled:opacity-50">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </button>
               </div>
@@ -228,96 +226,125 @@
 
           <!-- Quick Suggestion Chips -->
           <div class="flex flex-wrap items-center justify-center gap-2 mt-6 max-w-2xl mx-auto">
-            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 dark:border-zinc-700/60 dark:text-zinc-300 transition shadow-sm">
+            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 dark:border-zinc-700/60 dark:text-zinc-300 transition shadow-sm font-medium">
               Jurnal multi-vendor monitoring 2024-2026
             </button>
-            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 dark:border-zinc-700/60 dark:text-zinc-300 transition shadow-sm">
+            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 dark:border-zinc-700/60 dark:text-zinc-300 transition shadow-sm font-medium">
               Metodologi Personal Extreme Programming (PXP)
             </button>
-            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 dark:border-zinc-700/60 dark:text-zinc-300 transition shadow-sm">
+            <button class="suggestion-chip px-3 py-1.5 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-700/60 dark:border-zinc-700/60 dark:text-zinc-300 transition shadow-sm font-medium">
               Evaluasi mutu ISO/IEC 25010 & skor SUS
             </button>
           </div>
         </div>
 
-        <!-- Conversation & Result Container (Shown when query is submitted) -->
-        <div id="conversationContainer" class="hidden flex-col gap-6 pb-36">
+        <!-- Conversation & Result Container (Interactive Chat Layout) -->
+        <div id="conversationContainer" class="hidden flex-col gap-6 pb-36 max-w-4xl mx-auto w-full">
           
-          <!-- User Query Header -->
-          <div class="flex items-start gap-3">
-            <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-300 font-bold text-xs shrink-0 mt-0.5">
-              U
-            </div>
-            <div>
-              <p class="text-xs text-slate-500 dark:text-zinc-400 font-mono mb-1">Pertanyaan Anda</p>
-              <h3 id="displayQueryText" class="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-white tracking-tight"></h3>
+          <!-- User Chat Bubble (Right-Aligned / Distinctive) -->
+          <div class="flex items-start justify-end gap-3 pl-6 sm:pl-16">
+            <div class="bg-white dark:bg-surface border border-slate-200 dark:border-surface-border rounded-2xl rounded-tr-sm p-4 sm:p-5 shadow-sm text-slate-900 dark:text-zinc-100 max-w-2xl w-full space-y-2">
+              <div class="flex items-center justify-between gap-4 text-[11px] text-slate-400 dark:text-zinc-500 border-b border-slate-100 dark:border-zinc-800/80 pb-2 font-mono">
+                <span class="font-bold text-teal-700 dark:text-teal-400 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  <span>Pertanyaan Anda</span>
+                </span>
+                <span id="displayQueryFocusBadge" class="px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-[10px] font-semibold text-slate-600 dark:text-zinc-300">Fokus Akademik</span>
+              </div>
+              <p id="displayQueryText" class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white leading-relaxed"></p>
             </div>
           </div>
 
-          <!-- Live Search & Thinking Progress Tracker -->
-          <div id="searchProgressSection" class="p-3.5 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm space-y-2.5">
-            <div class="flex items-center justify-between text-xs">
-              <div class="flex items-center gap-2.5">
-                <span id="progressSpinner" class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span>
-                <span id="searchProgressStep" class="font-medium text-slate-700 dark:text-zinc-300">Menghubungkan ke mesin live Perplexity...</span>
-              </div>
-              <span id="searchProgressTimer" class="font-mono text-slate-500 dark:text-zinc-500 text-[11px]">0.0s</span>
+          <!-- AI Assistant Chat Bubble (Structured Academic Assistant Card) -->
+          <div class="flex items-start gap-3 sm:gap-4 pr-0 sm:pr-8">
+            <div class="w-9 h-9 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 mt-1 shadow-md shadow-teal-600/20">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
             </div>
-            
-            <!-- Collapsible Thinking / Reasoning Accordion -->
-            <div id="thinkingBox" class="hidden pt-2 border-t border-slate-100 dark:border-zinc-800/80">
-              <button id="thinkingToggleBtn" type="button" class="w-full flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 transition py-0.5">
-                <div class="flex items-center gap-1.5 font-medium">
-                  <svg id="thinkingChevron" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                  <span>Proses Penalaran (Thinking Process)</span>
-                </div>
-                <span id="thinkingDuration" class="text-[10px] font-mono text-slate-500 dark:text-zinc-500"></span>
-              </button>
-              <div id="thinkingContent" class="hidden mt-2.5 pl-3 border-l-2 border-teal-600 dark:border-teal-500/40 text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-mono space-y-1">
-                <!-- Live thinking steps injected here -->
-              </div>
-            </div>
-          </div>
 
-          <!-- Sources Carousel & Grid Section -->
-          <div id="sourcesContainer" class="space-y-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Sumber Rujukan (<span id="sourceCountBadge">0</span>)</h4>
-              </div>
-              <button id="viewAllSourcesBtn" class="text-xs text-teal-600 dark:text-teal-400 hover:underline">Lihat Semua</button>
-            </div>
-            
-            <div id="sourcesGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <!-- Populated via JavaScript -->
-            </div>
-          </div>
-
-          <!-- Final Answer Container -->
-          <div id="answerSection" class="space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-200 dark:border-surface-border pb-2">
-              <div class="flex items-center gap-2">
-                <div class="w-5 h-5 rounded bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xs">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
-                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-400">Jawaban & Sintesis</h4>
-              </div>
+            <div class="flex-1 min-w-0 bg-white dark:bg-surface border border-slate-200 dark:border-surface-border rounded-2xl p-4 sm:p-6 shadow-sm space-y-5">
               
-              <div class="flex items-center gap-2">
-                <button id="copyAnswerBtn" class="p-1.5 rounded-lg text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition" title="Salin Jawaban Markdown">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </button>
-                <button id="exportApaBtn" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 dark:bg-teal-500/10 dark:hover:bg-teal-500/20 dark:border-teal-500/20 dark:text-teal-400 text-xs font-medium transition flex items-center gap-1.5" title="Export Sitasi APA 6th Edition">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
-                  <span>Ekspor APA 6th</span>
+              <!-- Assistant Header Bar -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-zinc-800">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-slate-900 dark:text-white">Open Perplexity Engine</span>
+                  <span id="displayAssistantModelBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">Model: Sonar Web</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="copyAnswerBtn" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition text-xs font-semibold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>Salin</span>
+                  </button>
+                  <button id="exportApaBtn" class="px-2.5 py-1 rounded-lg bg-teal-50 hover:bg-teal-100 dark:bg-teal-500/10 dark:hover:bg-teal-500/20 border border-teal-200 dark:border-teal-500/20 text-teal-700 dark:text-teal-400 transition text-xs font-semibold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    <span>Sitasi APA 6th</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Live Search Progress Tracker -->
+              <div id="searchProgressSection" class="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-200 dark:border-zinc-700/50 space-y-2.5">
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2.5">
+                    <span id="progressSpinner" class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin shrink-0"></span>
+                    <span id="searchProgressStep" class="font-medium text-slate-700 dark:text-zinc-300">Menghubungkan ke armada live Perplexity...</span>
+                  </div>
+                  <span id="searchProgressTimer" class="font-mono text-slate-500 dark:text-zinc-500 text-[11px]">0.0s</span>
+                </div>
+                
+                <!-- Thinking Accordion -->
+                <div id="thinkingBox" class="hidden pt-2 border-t border-slate-200 dark:border-zinc-700/50">
+                  <button id="thinkingToggleBtn" type="button" class="w-full flex items-center justify-between text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 transition py-0.5">
+                    <div class="flex items-center gap-1.5 font-medium">
+                      <svg id="thinkingChevron" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      <span>Proses Penalaran (Thinking Process)</span>
+                    </div>
+                    <span id="thinkingDuration" class="text-[10px] font-mono text-slate-500 dark:text-zinc-500"></span>
+                  </button>
+                  <div id="thinkingContent" class="hidden mt-2.5 pl-3 border-l-2 border-teal-600 dark:border-teal-500/40 text-xs text-slate-600 dark:text-zinc-400 leading-relaxed font-mono space-y-1">
+                    <!-- Live thinking steps injected here -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Academic Literature & Sources Cards (Consensus / SciSpace Style) -->
+              <div id="sourcesContainer" class="space-y-3 pt-1">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Rujukan Jurnal & Literatur Terkait (<span id="sourceCountBadge">0</span>)</h4>
+                  </div>
+                  <span class="text-[11px] text-slate-400 dark:text-zinc-500">Peringkat Berdasarkan Relevansi</span>
+                </div>
+                
+                <!-- Responsive: Horizontal Swipe on Mobile, Grid on Tablet/Desktop -->
+                <div id="sourcesGrid" class="flex overflow-x-auto sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-2 sm:pb-0 scrollbar-none snap-x">
+                  <!-- Populated via JavaScript with rich journal cards -->
+                </div>
+              </div>
+
+              <!-- Answer Markdown & Structured Topic Cards -->
+              <div class="pt-4 border-t border-slate-100 dark:border-zinc-800 space-y-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-5 h-5 rounded bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 text-xs">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                  </div>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">Sintesis & Rekomendasi Topik</h4>
+                </div>
+
+                <div id="answerMarkdown" class="prose max-w-none text-slate-800 dark:text-zinc-200 leading-relaxed font-sans">
+                  <!-- Formatted answer with topic cards -->
+                </div>
+              </div>
+
+              <!-- Bottom Card Actions -->
+              <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-zinc-800 text-xs text-slate-500 dark:text-zinc-400">
+                <span>Diverifikasi silang dengan pangkalan data ilmiah.</span>
+                <button id="quickRegenerateBtn" class="hover:text-teal-600 dark:hover:text-teal-400 transition flex items-center gap-1 font-semibold">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                  <span>Ulangi dengan Akun Lain</span>
                 </button>
               </div>
-            </div>
 
-            <!-- Markdown Rendered Answer -->
-            <div id="answerMarkdown" class="prose max-w-none text-slate-800 dark:text-zinc-200 leading-relaxed font-sans">
-              <!-- Rendered via marked.js -->
             </div>
           </div>
 
@@ -326,10 +353,10 @@
       </div>
 
       <!-- Floating Bottom Follow-up Input Bar -->
-      <div id="floatingInputBar" class="hidden fixed bottom-6 left-0 md:left-64 right-0 px-4 z-30 pointer-events-none">
+      <div id="floatingInputBar" class="hidden fixed bottom-4 left-0 md:left-64 right-0 px-3 sm:px-6 z-30 pointer-events-none">
         <div class="max-w-3xl mx-auto pointer-events-auto bg-white/95 dark:bg-surface/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-surface-border shadow-2xl p-2 flex items-center gap-2">
-          <input id="followUpInput" type="text" placeholder="Ajukan pertanyaan lanjutan..." class="flex-1 bg-transparent border-none outline-none text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-400 text-sm px-3 py-1.5">
-          <button id="followUpSubmitBtn" class="bg-teal-600 hover:bg-teal-500 text-white p-2 rounded-xl transition flex items-center justify-center">
+          <input id="followUpInput" type="text" placeholder="Ajukan pertanyaan lanjutan tentang topik atau metodologi..." class="flex-1 bg-transparent border-none outline-none text-slate-800 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-400 text-sm px-3 py-1.5 font-medium">
+          <button id="followUpSubmitBtn" class="bg-teal-600 hover:bg-teal-500 text-white p-2.5 rounded-xl transition flex items-center justify-center shrink-0 shadow-md shadow-teal-600/20">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
           </button>
         </div>
@@ -337,19 +364,19 @@
     </section>
 
     <!-- Content View: ACCOUNT FARM DASHBOARD -->
-    <section id="viewFarm" class="hidden flex-1 overflow-y-auto p-4 sm:p-6">
-      <div class="max-w-5xl mx-auto space-y-6">
+    <section id="viewFarm" class="hidden flex-1 h-full overflow-y-auto min-h-0 p-4 sm:p-6">
+      <div class="max-w-5xl mx-auto space-y-6 pb-20">
         
         <!-- Dashboard Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-surface-border">
           <div>
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Manajemen Akun</h2>
-            <p class="text-sm text-slate-500 dark:text-zinc-400">Daftar armada akun Perplexity, rotasi otomatis, dan pemantauan kueri.</p>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Manajemen Armada Akun</h2>
+            <p class="text-sm text-slate-500 dark:text-zinc-400">Daftar armada akun Perplexity, rotasi beban otomatis, dan pemantauan kueri.</p>
           </div>
           <div class="flex items-center gap-2">
-            <button id="farmRotateBtn" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-medium border border-slate-200 dark:border-zinc-700 transition flex items-center gap-2 shadow-sm">
+            <button id="farmRotateBtn" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 text-xs font-semibold border border-slate-200 dark:border-zinc-700 transition flex items-center gap-2 shadow-sm">
               <svg class="w-4 h-4 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-              <span>Rotasi Akun</span>
+              <span>Rotasi Beban</span>
             </button>
             <button id="farmSpawnBtn" class="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-lg shadow-teal-600/20 transition flex items-center gap-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -361,19 +388,19 @@
         <!-- Metric Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <div class="p-4 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm">
-            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1">Total Akun</p>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1 font-medium">Total Akun</p>
             <p id="farmStatTotal" class="text-2xl font-bold text-slate-900 dark:text-white">0</p>
           </div>
           <div class="p-4 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm">
-            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1">Akun Aktif</p>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1 font-medium">Akun Aktif</p>
             <p id="farmStatActive" class="text-2xl font-bold text-teal-600 dark:text-teal-400">0</p>
           </div>
           <div class="p-4 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm">
-            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1">Cooldown (429)</p>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1 font-medium">Cooldown (429)</p>
             <p id="farmStatCooldown" class="text-2xl font-bold text-amber-500 dark:text-amber-400">0</p>
           </div>
           <div class="p-4 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm">
-            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1">Total Kueri</p>
+            <p class="text-xs text-slate-500 dark:text-zinc-400 mb-1 font-medium">Total Kueri</p>
             <p id="farmStatUsage" class="text-2xl font-bold text-slate-900 dark:text-white">0</p>
           </div>
         </div>
@@ -381,11 +408,11 @@
         <!-- Strategy Selector Card -->
         <div class="p-4 rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Strategi Rotasi Beban</h4>
+            <h4 class="text-sm font-bold text-slate-900 dark:text-white">Strategi Rotasi Beban</h4>
             <p class="text-xs text-slate-500 dark:text-zinc-400">Algoritma pemilihan akun untuk setiap permintaan kueri.</p>
           </div>
           <div class="flex items-center gap-3">
-            <select id="farmStrategySelect" class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs rounded-lg px-3 py-2 border border-slate-300 dark:border-zinc-700 outline-none">
+            <select id="farmStrategySelect" class="bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold rounded-lg px-3 py-2 border border-slate-300 dark:border-zinc-700 outline-none">
               <option value="FAILOVER_ONLY">Failover Only (Pindah saat Limit)</option>
               <option value="ROUND_ROBIN">Round-Robin (Bagi Rata per Kueri)</option>
               <option value="LEAST_USED">Least-Used (Beban Terendah)</option>
@@ -396,12 +423,12 @@
         <!-- Account Fleet Table -->
         <div class="rounded-xl bg-white dark:bg-surface border border-slate-200 dark:border-surface-border shadow-sm overflow-hidden">
           <div class="p-4 border-b border-slate-200 dark:border-surface-border flex items-center justify-between">
-            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Daftar Akun Terdaftar</h3>
-            <span class="text-xs text-slate-500 dark:text-zinc-400">Diperbarui berkala</span>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Daftar Akun Terdaftar</h3>
+            <span class="text-xs text-slate-500 dark:text-zinc-400">Diperbarui berkala secara otomatis</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-b border-slate-200 dark:border-surface-border font-medium">
+              <thead class="bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-400 border-b border-slate-200 dark:border-surface-border font-semibold">
                 <tr>
                   <th class="p-3 w-12 text-center">No</th>
                   <th class="p-3">Identitas Akun / Email</th>
@@ -423,12 +450,12 @@
 
   </main>
 
-  <!-- Modal Buat Akun Baru (Quantity Selector) -->
-  <div id="spawnModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+  <!-- Modal Buat Akun Baru (Quantity Selector with Live SSE Stream) -->
+  <div id="spawnModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
     <div class="w-full max-w-lg bg-white dark:bg-surface rounded-2xl border border-slate-200 dark:border-surface-border shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-surface-border pb-3">
         <div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Buat Akun Armada Baru</h3>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Buat Akun Armada Baru</h3>
           <p class="text-xs text-slate-500 dark:text-zinc-400">Otomasi pembuatan akun Perplexity melalui mail.tm fleet.</p>
         </div>
         <button id="closeSpawnModalBtn" class="text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white p-1">
@@ -443,22 +470,22 @@
           
           <!-- Preset Buttons -->
           <div class="grid grid-cols-4 gap-2">
-            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-medium text-slate-700 dark:text-zinc-300 transition" data-count="1">1 Akun</button>
-            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-medium text-slate-700 dark:text-zinc-300 transition" data-count="2">2 Akun</button>
-            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-medium text-slate-700 dark:text-zinc-300 transition" data-count="3">3 Akun</button>
-            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-medium text-slate-700 dark:text-zinc-300 transition" data-count="5">5 Akun</button>
+            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition" data-count="1">1 Akun</button>
+            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition" data-count="2">2 Akun</button>
+            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition" data-count="3">3 Akun</button>
+            <button type="button" class="spawn-preset-btn py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 hover:border-teal-500 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition" data-count="5">5 Akun</button>
           </div>
 
           <!-- Number Input -->
           <div class="flex items-center gap-3 pt-1">
-            <span class="text-xs text-slate-500 dark:text-zinc-400">Atau tentukan manual:</span>
+            <span class="text-xs text-slate-500 dark:text-zinc-400 font-medium">Atau tentukan manual:</span>
             <input id="spawnCountInput" type="number" min="1" max="10" value="1" class="w-20 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 text-sm font-semibold outline-none focus:border-teal-500">
             <span class="text-xs text-slate-400 dark:text-zinc-500">(Maksimal 10 akun)</span>
           </div>
 
-          <!-- Information notice box -->
+          <!-- Information Notice Box -->
           <div class="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700/60 text-xs text-slate-600 dark:text-zinc-400 space-y-1">
-            <p class="font-medium text-slate-800 dark:text-zinc-300">Catatan Pembuatan:</p>
+            <p class="font-bold text-slate-800 dark:text-zinc-300">Catatan Pembuatan:</p>
             <p>- Setiap akun menggunakan disposable email unik dan identitas random terverifikasi.</p>
             <p>- Estimasi waktu: ~20 - 30 detik per akun via CDP browser instance.</p>
           </div>
@@ -467,23 +494,23 @@
         <!-- Progress Indicator (Shown while creating) -->
         <div id="spawnProgressSection" class="hidden space-y-3 pt-2">
           <div class="flex items-center justify-between text-xs">
-            <span id="spawnProgressText" class="font-medium text-slate-700 dark:text-zinc-300 flex items-center gap-2">
+            <span id="spawnProgressText" class="font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-2">
               <span class="w-3.5 h-3.5 border-2 border-teal-600 dark:border-teal-400 border-t-transparent rounded-full animate-spin"></span>
               <span>Menyiapkan pembuatan akun...</span>
             </span>
-            <span id="spawnProgressBadge" class="font-mono text-teal-600 dark:text-teal-400">0%</span>
+            <span id="spawnProgressBadge" class="font-mono text-teal-600 dark:text-teal-400 font-bold">0%</span>
           </div>
-          <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden">
-            <div id="spawnProgressBar" class="h-full bg-teal-600 dark:bg-teal-500 transition-all duration-300" style="width: 5%"></div>
+          <div class="w-full h-2.5 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-hidden">
+            <div id="spawnProgressBar" class="h-full bg-teal-600 dark:bg-teal-500 transition-all duration-300" style="width: 3%"></div>
           </div>
-          <div id="spawnStatusLogs" class="max-h-28 overflow-y-auto p-2.5 rounded-lg bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 font-mono text-[11px] text-slate-600 dark:text-zinc-400 space-y-1">
+          <div id="spawnStatusLogs" class="max-h-36 overflow-y-auto p-2.5 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 font-mono text-[11px] text-slate-600 dark:text-zinc-400 space-y-1">
             <!-- Dynamic logs -->
           </div>
         </div>
       </div>
 
       <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-surface-border">
-        <button id="cancelSpawnBtn" type="button" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs font-medium text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition">
+        <button id="cancelSpawnBtn" type="button" class="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition">
           Batal
         </button>
         <button id="confirmSpawnBtn" type="button" class="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-md shadow-teal-600/20">
@@ -495,11 +522,11 @@
   </div>
 
   <!-- Modal Export Sitasi APA 6th -->
-  <div id="apaModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4">
+  <div id="apaModal" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center p-4 backdrop-blur-sm">
     <div class="w-full max-w-2xl bg-white dark:bg-surface rounded-2xl border border-slate-200 dark:border-surface-border shadow-2xl p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-surface-border pb-3">
         <div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Daftar Pustaka APA 6th Edition</h3>
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">Daftar Pustaka APA 6th Edition</h3>
           <p class="text-xs text-slate-500 dark:text-zinc-400">Format sitasi standar APA 6th Edition untuk karya ilmiah dan jurnal.</p>
         </div>
         <button id="closeApaModalBtn" class="text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-white p-1">
