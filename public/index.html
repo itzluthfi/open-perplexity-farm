@@ -227,6 +227,31 @@
             </div>
           </div>
 
+          <!-- Live Search & Thinking Progress Tracker -->
+          <div id="searchProgressSection" class="p-3.5 rounded-xl bg-surface border border-surface-border space-y-2.5">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2.5">
+                <span id="progressSpinner" class="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></span>
+                <span id="searchProgressStep" class="font-medium text-zinc-300">Menghubungkan ke mesin live Perplexity...</span>
+              </div>
+              <span id="searchProgressTimer" class="font-mono text-zinc-500 text-[11px]">0.0s</span>
+            </div>
+            
+            <!-- Collapsible Thinking / Reasoning Accordion -->
+            <div id="thinkingBox" class="hidden pt-2 border-t border-zinc-800/80">
+              <button id="thinkingToggleBtn" type="button" class="w-full flex items-center justify-between text-xs text-zinc-400 hover:text-zinc-200 transition py-0.5">
+                <div class="flex items-center gap-1.5 font-medium">
+                  <svg id="thinkingChevron" class="w-3.5 h-3.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  <span>Proses Penalaran (Thinking Process)</span>
+                </div>
+                <span id="thinkingDuration" class="text-[10px] font-mono text-zinc-500"></span>
+              </button>
+              <div id="thinkingContent" class="hidden mt-2.5 pl-3 border-l-2 border-teal-500/40 text-xs text-zinc-400 leading-relaxed font-mono space-y-1">
+                <!-- Live thinking steps injected here -->
+              </div>
+            </div>
+          </div>
+
           <!-- Interactive Sources Card Grid -->
           <div id="sourcesSection" class="pt-2">
             <div class="flex items-center gap-2 text-xs font-semibold text-zinc-400 mb-3">

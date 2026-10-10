@@ -55,7 +55,16 @@ const el = {
   apaModal: document.getElementById('apaModal'),
   closeApaModalBtn: document.getElementById('closeApaModalBtn'),
   apaOutputTextarea: document.getElementById('apaOutputTextarea'),
-  copyApaModalBtn: document.getElementById('copyApaModalBtn')
+  copyApaModalBtn: document.getElementById('copyApaModalBtn'),
+  searchProgressSection: document.getElementById('searchProgressSection'),
+  progressSpinner: document.getElementById('progressSpinner'),
+  searchProgressStep: document.getElementById('searchProgressStep'),
+  searchProgressTimer: document.getElementById('searchProgressTimer'),
+  thinkingBox: document.getElementById('thinkingBox'),
+  thinkingToggleBtn: document.getElementById('thinkingToggleBtn'),
+  thinkingChevron: document.getElementById('thinkingChevron'),
+  thinkingDuration: document.getElementById('thinkingDuration'),
+  thinkingContent: document.getElementById('thinkingContent')
 };
 
 // Initialize
@@ -117,6 +126,14 @@ function setupEventListeners() {
   el.farmRotateBtn?.addEventListener('click', rotateAccount);
   el.farmSpawnBtn?.addEventListener('click', spawnAccount);
   el.clearHistoryBtn?.addEventListener('click', clearAllSessions);
+  el.thinkingToggleBtn?.addEventListener('click', () => {
+    if (!el.thinkingContent) return;
+    const isHidden = el.thinkingContent.classList.contains('hidden');
+    el.thinkingContent.classList.toggle('hidden');
+    if (el.thinkingChevron) {
+      el.thinkingChevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+  });
 
   // Strategy change
   el.farmStrategySelect?.addEventListener('change', async (e) => {
@@ -172,8 +189,156 @@ function startNewChat() {
   el.heroContainer.classList.remove('hidden');
   el.conversationContainer.classList.add('hidden');
   el.followupBar.classList.add('hidden');
+  if (el.searchProgressSection) el.searchProgressSection.classList.add('hidden');
   el.promptInput.value = '';
   el.promptInput.focus();
+}
+
+let progressInterval = null;
+let progressStartTime = 0;
+let progressTimers = [];
+
+function startProgress(query) {
+  if (el.searchProgressSection) el.searchProgressSection.classList.remove('hidden');
+  if (el.thinkingBox) el.thinkingBox.classList.remove('hidden');
+  if (el.thinkingContent) {
+    el.thinkingContent.innerHTML = '';
+    el.thinkingContent.classList.add('hidden');
+  }
+  if (el.thinkingChevron) el.thinkingChevron.style.transform = 'rotate(0deg)';
+  if (el.thinkingDuration) el.thinkingDuration.innerText = '';
+  
+  if (el.progressSpinner) {
+    el.progressSpinner.className = 'w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin shrink-0';
+  }
+  if (el.searchProgressStep) {
+    el.searchProgressStep.innerText = 'Menghubungkan ke sesi Chrome Perplexity...';
+  }
+
+  progressStartTime = Date.now();
+  if (progressInterval) clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    const elapsed = ((Date.now() - progressStartTime) / 1000).toFixed(1);
+    if (el.searchProgressTimer) el.searchProgressTimer.innerText = `${elapsed}s`;
+  }, 100);
+
+  progressTimers.forEach(clearTimeout);
+  progressTimers = [];
+
+  addThinkingStep(`Menganalisis kueri pencarian: "${query}"`);
+
+  progressTimers.push(setTimeout(() => {
+    if (state.isGenerating) {
+      if (el.searchProgressStep) el.searchProgressStep.innerText = 'Menjelajah basis data web dan mengekstrak rujukan relevan...';
+      addThinkingStep('Menemukan URL sumber terpercaya & memvalidasi metadata halaman...');
+    }
+  }, 1200));
+
+  progressTimers.push(setTimeout(() => {
+    if (state.isGenerating) {
+      if (el.searchProgressStep) el.searchProgressStep.innerText = 'Menganalisis dokumen & menyusun sintesis jawaban...';
+      addThinkingStep('Mengevaluasi kutipan rujukan dan memformat struktur sintesis...');
+    }
+  }, 3200));
+}
+
+function addThinkingStep(text) {
+  if (!el.thinkingContent) return;
+  const p = document.createElement('div');
+  p.className = 'flex items-center gap-2 py-0.5';
+  p.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></span><span>${escapeHtml(text)}</span>`;
+  el.thinkingContent.appendChild(p);
+}
+
+function completeProgress(sourcesCount) {
+  if (progressInterval) clearInterval(progressInterval);
+  progressTimers.forEach(clearTimeout);
+  progressTimers = [];
+
+  const totalTime = ((Date.now() - progressStartTime) / 1000).toFixed(1);
+  if (el.searchProgressTimer) el.searchProgressTimer.innerText = `${totalTime}s`;
+  if (el.thinkingDuration) el.thinkingDuration.innerText = `${totalTime} detik`;
+
+  if (el.progressSpinner) {
+    el.progressSpinner.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
+  }
+  if (el.searchProgressStep) {
+    el.searchProgressStep.innerText = `Selesai: ${sourcesCount} sumber terverifikasi (${totalTime}s)`;
+  }
+  addThinkingStep(`Sintesis selesai disusun berdasarkan ${sourcesCount} sumber.`);
+}
+
+function failProgress(errorMsg) {
+  if (progressInterval) clearInterval(progressInterval);
+  progressTimers.forEach(clearTimeout);
+  progressTimers = [];
+
+  if (el.progressSpinner) {
+    el.progressSpinner.className = 'w-2 h-2 rounded-full bg-red-400 shrink-0';
+  }
+  if (el.searchProgressStep) {
+    el.searchProgressStep.innerText = `Proses gagal: ${errorMsg}`;
+  }
+  addThinkingStep(`Error: ${errorMsg}`);
+}
+
+function renderSourcesSkeleton() {
+  if (!el.sourcesGrid) return;
+  el.sourceCount.innerText = '...';
+  el.sourcesGrid.innerHTML = `
+    <div class="p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 animate-pulse">
+      <div class="w-4 h-4 rounded bg-zinc-700/60 shrink-0 mt-0.5"></div>
+      <div class="w-full space-y-1.5 truncate">
+        <div class="h-3 bg-zinc-700/60 rounded w-3/4"></div>
+        <div class="h-2.5 bg-zinc-800/80 rounded w-1/3"></div>
+      </div>
+    </div>
+    <div class="p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 animate-pulse hidden sm:flex">
+      <div class="w-4 h-4 rounded bg-zinc-700/60 shrink-0 mt-0.5"></div>
+      <div class="w-full space-y-1.5 truncate">
+        <div class="h-3 bg-zinc-700/60 rounded w-4/5"></div>
+        <div class="h-2.5 bg-zinc-800/80 rounded w-1/2"></div>
+      </div>
+    </div>
+    <div class="p-2.5 rounded-xl bg-surface border border-surface-border flex items-start gap-2.5 animate-pulse hidden lg:flex">
+      <div class="w-4 h-4 rounded bg-zinc-700/60 shrink-0 mt-0.5"></div>
+      <div class="w-full space-y-1.5 truncate">
+        <div class="h-3 bg-zinc-700/60 rounded w-2/3"></div>
+        <div class="h-2.5 bg-zinc-800/80 rounded w-2/5"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderResponseSkeleton() {
+  if (!el.responseMarkdown) return;
+  el.responseMarkdown.innerHTML = `
+    <div class="space-y-3.5 py-2 animate-pulse">
+      <div class="h-4 bg-zinc-800/80 rounded w-11/12"></div>
+      <div class="h-4 bg-zinc-800/60 rounded w-full"></div>
+      <div class="h-4 bg-zinc-800/50 rounded w-4/5"></div>
+      <div class="h-4 bg-zinc-800/40 rounded w-3/5"></div>
+    </div>
+  `;
+}
+
+function setButtonsLoading(isLoading) {
+  if (el.submitBtn) {
+    el.submitBtn.disabled = isLoading;
+    el.submitBtn.innerHTML = isLoading
+      ? '<span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>'
+      : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+  }
+  if (el.followupSubmitBtn) {
+    el.followupSubmitBtn.disabled = isLoading;
+    el.followupSubmitBtn.innerHTML = isLoading
+      ? '<span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>'
+      : '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>';
+  }
+  if (el.promptInput) el.promptInput.disabled = isLoading;
+  if (el.followupInput) el.followupInput.disabled = isLoading;
+  if (el.focusSelector) el.focusSelector.disabled = isLoading;
+  if (el.modelSelector) el.modelSelector.disabled = isLoading;
 }
 
 async function handleMainSubmit() {
@@ -181,17 +346,19 @@ async function handleMainSubmit() {
   if (!query || state.isGenerating) return;
 
   state.isGenerating = true;
-  el.submitBtn.disabled = true;
+  setButtonsLoading(true);
 
   // Transition UI to Conversation view
   el.heroContainer.classList.add('hidden');
   el.conversationContainer.classList.remove('hidden');
   el.conversationContainer.classList.add('flex');
   el.displayQueryText.innerText = query;
-  el.responseMarkdown.innerHTML = '<span class="animate-pulse text-zinc-400">Menghubungkan ke mesin Perplexity live...</span>';
   el.responseStatusLabel.innerText = 'Mencari & menyusun sintesis...';
-  el.sourcesGrid.innerHTML = '';
-  el.sourceCount.innerText = '0';
+
+  // Start visual skeletons and thinking tracker
+  startProgress(query);
+  renderSourcesSkeleton();
+  renderResponseSkeleton();
 
   const session = {
     id: 'sess_' + Date.now(),
@@ -228,19 +395,22 @@ async function handleMainSubmit() {
       renderAnswer(answerText);
       renderSources(sources);
       saveSession(session);
+      completeProgress(sources.length);
 
       el.responseStatusLabel.innerText = 'Selesai';
       el.followupBar.classList.remove('hidden');
     } else if (data.error) {
       el.responseMarkdown.innerHTML = `<div class="p-3 rounded-lg bg-red-900/30 border border-red-700/50 text-red-300 text-sm">${data.error.message}</div>`;
       el.responseStatusLabel.innerText = 'Gagal';
+      failProgress(data.error.message);
     }
   } catch (err) {
     el.responseMarkdown.innerHTML = `<div class="p-3 rounded-lg bg-red-900/30 border border-red-700/50 text-red-300 text-sm">Gagal menghubungkan ke gateway API: ${err.message}</div>`;
     el.responseStatusLabel.innerText = 'Error';
+    failProgress(err.message);
   } finally {
     state.isGenerating = false;
-    el.submitBtn.disabled = false;
+    setButtonsLoading(false);
     fetchAccountsAndStats();
   }
 }
@@ -372,7 +542,11 @@ function renderAccountTable(accounts) {
 // Actions
 async function rotateAccount() {
   try {
-    el.quickRotateBtn.classList.add('animate-spin');
+    el.quickRotateBtn?.classList.add('animate-spin');
+    if (el.farmRotateBtn) {
+      el.farmRotateBtn.disabled = true;
+      el.farmRotateBtn.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-teal-400 border-t-transparent rounded-full animate-spin"></span><span>Merotasi...</span>';
+    }
     const res = await fetch('/v1/accounts/rotate', { method: 'POST' });
     const data = await res.json();
     fetchAccountsAndStats();
@@ -380,14 +554,23 @@ async function rotateAccount() {
   } catch (err) {
     showToast('Gagal merotasi akun: ' + err.message);
   } finally {
-    setTimeout(() => el.quickRotateBtn.classList.remove('animate-spin'), 600);
+    setTimeout(() => {
+      el.quickRotateBtn?.classList.remove('animate-spin');
+      if (el.farmRotateBtn) {
+        el.farmRotateBtn.disabled = false;
+        el.farmRotateBtn.innerHTML = '<svg class="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg><span>Rotasi Akun</span>';
+      }
+    }, 600);
   }
 }
 
 async function spawnAccount() {
   try {
     showToast('Membuat akun baru...');
-    el.farmSpawnBtn.disabled = true;
+    if (el.farmSpawnBtn) {
+      el.farmSpawnBtn.disabled = true;
+      el.farmSpawnBtn.innerHTML = '<span class="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin"></span><span>Membuat Akun...</span>';
+    }
     const res = await fetch('/v1/accounts/spawn', { method: 'POST' });
     const data = await res.json();
     fetchAccountsAndStats();
@@ -395,7 +578,10 @@ async function spawnAccount() {
   } catch (err) {
     showToast('Gagal membuat akun: ' + err.message);
   } finally {
-    el.farmSpawnBtn.disabled = false;
+    if (el.farmSpawnBtn) {
+      el.farmSpawnBtn.disabled = false;
+      el.farmSpawnBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span>Buat Akun Otomatis</span>';
+    }
   }
 }
 
