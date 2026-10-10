@@ -69,6 +69,12 @@ const el = {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.marked) {
+    marked.setOptions({
+      breaks: true,
+      gfm: true
+    });
+  }
   loadSessions();
   setupEventListeners();
   fetchAccountsAndStats();
@@ -400,7 +406,7 @@ async function handleMainSubmit() {
       session.answer = answerText;
       session.sources = sources;
 
-      renderAnswer(answerText);
+      renderAnswer(answerText, sources);
       renderSources(sources);
       saveSession(session);
       completeProgress(sources.length);
@@ -432,14 +438,59 @@ async function handleFollowupSubmit() {
   handleMainSubmit();
 }
 
-function renderAnswer(markdownText) {
+function formatMarkdownForDisplay(text, sources = []) {
+  if (!text) return '';
+  let formatted = text;
+
+  // 1. Format and link citations to actual source URLs
+  // Handle [domain.com] or domain.com +1
+  formatted = formatted.replace(/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s\)\.\,]*)?)\s*(?:\+(\d+))?/g, (match, domain, extra) => {
+    // Avoid re-matching if already inside a markdown link
+    const matchedSource = sources.find(s => s.domain?.toLowerCase() === domain.toLowerCase() || s.url?.includes(domain));
+    const url = matchedSource ? matchedSource.url : `https://${domain}`;
+    return ` [${domain}](${url}) `;
+  });
+
+  // 2. Format standalone section headers
+  formatted = formatted.replace(/(^|\n\n)([A-Z][A-Za-z0-9\s\/\-]{2,45})(?:\:)?(\n\n|$)/g, (match, before, header, after) => {
+    const trimmed = header.trim();
+    if (trimmed.startsWith('#') || trimmed.startsWith('*') || trimmed.endsWith('.')) {
+      return match;
+    }
+    return `${before}### ${trimmed}${after}`;
+  });
+
+  // 3. Format key-value properties
+  formatted = formatted.replace(/(^|\n)\s*(Fokus|Kebaruan|Alasan|Alasannya|Metodologi|Tujuan|Kelebihan|Kekurangan|Variabel|Kesimpulan)\s*:\s*/gim, '$1- **$2:** ');
+
+  // 4. Format quoted keyword items
+  formatted = formatted.replace(/(^|\n)\s*("[^"\n]+"|'[^'\n]+')\s*(?=\n|$)/g, '$1- `$2`');
+
+  return formatted;
+}
+
+function renderAnswer(markdownText, sources = []) {
+  if (!markdownText) return;
+  const formattedText = formatMarkdownForDisplay(markdownText, sources);
+
   if (window.marked) {
-    el.responseMarkdown.innerHTML = marked.parse(markdownText);
+    el.responseMarkdown.innerHTML = marked.parse(formattedText);
   } else {
-    el.responseMarkdown.innerText = markdownText;
+    el.responseMarkdown.innerText = formattedText;
   }
 
-  // Render KaTeX Math jika ada
+  // Convert source links to high-contrast interactive citation pills
+  const links = el.responseMarkdown.querySelectorAll('a');
+  links.forEach(a => {
+    const text = a.innerText.trim();
+    if (text.includes('.') || text.startsWith('[') || text.match(/^\d+$/)) {
+      a.className = 'citation-pill';
+      a.target = '_blank';
+      a.title = 'Buka rujukan: ' + a.href;
+    }
+  });
+
+  // Render KaTeX Math if present
   if (window.renderMathInElement) {
     window.renderMathInElement(el.responseMarkdown, {
       delimiters: [
@@ -697,7 +748,7 @@ function renderSessionList() {
       el.conversationContainer.classList.remove('hidden');
       el.conversationContainer.classList.add('flex');
       el.displayQueryText.innerText = sess.query;
-      renderAnswer(sess.answer);
+      renderAnswer(sess.answer, sess.sources || []);
       renderSources(sess.sources || []);
       el.responseStatusLabel.innerText = 'Selesai';
       el.followupBar.classList.remove('hidden');

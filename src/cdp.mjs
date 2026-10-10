@@ -312,7 +312,7 @@ export class CdpSession {
                 const mdSources = extractCitationsFromMarkdown(status.latestText);
                 const combinedSources = dedupeSources([...(status.sources || []), ...mdSources]);
                 return {
-                  text: status.latestText,
+                  text: formatPerplexityOutput(status.latestText),
                   sources: combinedSources
                 };
               }
@@ -325,7 +325,7 @@ export class CdpSession {
     if (lastText && lastText.length > 40) {
       const mdSources = extractCitationsFromMarkdown(lastText);
       return {
-        text: lastText,
+        text: formatPerplexityOutput(lastText),
         sources: mdSources
       };
     }
@@ -339,6 +339,31 @@ export class CdpSession {
       this.ws = null;
     }
   }
+}
+
+export function formatPerplexityOutput(rawText) {
+  if (!rawText) return "";
+  let text = rawText;
+
+  // 1. Bersihkan floating citation clutter seperti: "jurnal.kharisma.ac +1" atau "domain.com +3"
+  text = text.replace(/([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:\/[^\s\)\.\,]*)?)\s*(?:\+(\d+))?/g, "[$1]");
+
+  // 2. Beri spasi dan format bold pada label umum
+  text = text.replace(/(^|\n)\s*(Fokus|Kebaruan|Alasan|Alasannya|Metodologi|Tujuan|Kelebihan|Kekurangan|Variabel|Kesimpulan)\s*:\s*/gim, "$1- **$2:** ");
+
+  // 3. Format Section Headers jika baris adalah judul pendek tanpa titik
+  text = text.replace(/(^|\n\n)([A-Z][A-Za-z0-9\s\/\-]{2,45})(?:\:)?(\n\n|$)/g, (match, before, header, after) => {
+    const trimmed = header.trim();
+    if (trimmed.startsWith("#") || trimmed.startsWith("*") || trimmed.endsWith(".")) {
+      return match;
+    }
+    return `${before}### ${trimmed}${after}`;
+  });
+
+  // 4. Format daftar kutipan / keyword jika berupa baris bertanda petik
+  text = text.replace(/(^|\n)\s*("[^"\n]+"|'[^'\n]+')\s*(?=\n|$)/g, "$1- `$2`");
+
+  return text.trim();
 }
 
 function dedupeSources(sources) {
